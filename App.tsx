@@ -408,13 +408,12 @@ function TopNav({
         {items.map((item) => {
           const active = page === item.key;
           return (
-            <Pressable
+            <AnimatedNavButton
               key={item.key}
+              label={item.label}
               onPress={() => onNavigate(item.key)}
-              style={[styles.navPill, active && styles.navPillActive]}
-            >
-              <Text style={[styles.navPillText, active && styles.navPillTextActive]}>{item.label}</Text>
-            </Pressable>
+              active={active}
+            />
           );
         })}
       </View>
@@ -456,6 +455,116 @@ function HomeHero({
           <ActionButton label="浏览课程门户" kind="dark" onPress={() => onNavigate('courses')} />
           <ActionButton label="查看智能体案例" kind="light" onPress={() => onNavigate('agents')} />
         </View>
+
+        <HeroMotionField />
+      </View>
+    </View>
+  );
+}
+
+function AnimatedNavButton({
+  label,
+  onPress,
+  active,
+}: {
+  label: string;
+  onPress: () => void;
+  active: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const accentStyle =
+    label === '首页'
+      ? styles.navPillYellow
+      : label === '课程门户设计'
+        ? styles.navPillBlue
+        : styles.navPillOrange;
+  const labelStyle =
+    label === '首页' ? styles.navPillTextDark : styles.navPillTextLight;
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
+      style={({ pressed }) => [
+        styles.navPill,
+        accentStyle,
+        active && styles.navPillActive,
+        hovered && styles.navPillHover,
+        pressed && styles.navPillPressed,
+      ]}
+    >
+      <Text style={[styles.navPillText, labelStyle, active && styles.navPillTextActive]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function HeroMotionField() {
+  const driftOne = useRef(new Animated.Value(0)).current;
+  const driftTwo = useRef(new Animated.Value(0)).current;
+  const driftThree = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const makeLoop = (value: Animated.Value, distance: number, duration: number) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(value, {
+            toValue: distance,
+            duration,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+          Animated.timing(value, {
+            toValue: 0,
+            duration,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+        ]),
+      );
+
+    const a = makeLoop(driftOne, -14, 3400);
+    const b = makeLoop(driftTwo, 18, 4200);
+    const c = makeLoop(driftThree, -10, 3000);
+    a.start();
+    b.start();
+    c.start();
+    return () => {
+      a.stop();
+      b.stop();
+      c.stop();
+    };
+  }, [driftOne, driftTwo, driftThree]);
+
+  return (
+    <View style={styles.motionFieldWrap}>
+      <View style={styles.motionFieldGrid} />
+
+      <Animated.View style={[styles.motionBlockLarge, { transform: [{ translateY: driftOne }, { rotate: '-8deg' }] }]} />
+      <Animated.View style={[styles.motionBlockMedium, { transform: [{ translateY: driftTwo }, { rotate: '6deg' }] }]} />
+      <Animated.View style={[styles.motionRingLarge, { transform: [{ translateY: driftThree }] }]} />
+      <Animated.View style={[styles.motionRingSmall, { transform: [{ translateY: driftOne }] }]} />
+
+      <View style={styles.motionDotsRow}>
+        {Array.from({ length: 14 }).map((_, index) => (
+          <View
+            key={`dot-${index}`}
+            style={[
+              styles.motionDot,
+              {
+                opacity: index % 3 === 0 ? 0.82 : 0.48,
+                backgroundColor:
+                  index % 4 === 0
+                    ? 'rgba(255, 193, 71, 0.9)'
+                    : index % 4 === 1
+                      ? 'rgba(255, 164, 204, 0.8)'
+                      : index % 4 === 2
+                        ? 'rgba(108, 171, 255, 0.78)'
+                        : 'rgba(255, 236, 210, 0.9)',
+              },
+            ]}
+          />
+        ))}
       </View>
     </View>
   );
@@ -1178,22 +1287,57 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   navPill: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'transparent',
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    minWidth: 96,
+    minHeight: 88,
+    borderRadius: 28,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   navPillActive: {
-    backgroundColor: palette.dark,
+    transform: [{ translateY: -3 }],
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
   },
   navPillText: {
-    color: palette.muted,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
   },
+  navPillTextDark: {
+    color: '#1c140e',
+  },
+  navPillTextLight: {
+    color: '#fff9f0',
+  },
   navPillTextActive: {
-    color: '#f3ecd7',
+    color: '#fff9f0',
+  },
+  navPillYellow: {
+    backgroundColor: '#ffc125',
+    borderColor: '#f3b412',
+    shadowColor: '#b47b0f',
+  },
+  navPillBlue: {
+    backgroundColor: '#2e45c7',
+    borderColor: '#2a40b9',
+    shadowColor: '#24348c',
+  },
+  navPillOrange: {
+    backgroundColor: '#ff5a0a',
+    borderColor: '#ef5206',
+    shadowColor: '#b5430b',
+  },
+  navPillHover: {
+    transform: [{ translateY: -5 }, { scale: 1.02 }],
+    shadowOpacity: 0.2,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 9 },
+  },
+  navPillPressed: {
+    transform: [{ translateY: -1 }, { scale: 0.99 }],
   },
   hero: {
     minHeight: 560,
@@ -1343,6 +1487,88 @@ const styles = StyleSheet.create({
     color: '#5a3a10',
     fontWeight: '700',
     fontSize: 14,
+  },
+  motionFieldWrap: {
+    width: '100%',
+    height: 320,
+    marginTop: 42,
+    borderRadius: 28,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.54)',
+    borderWidth: 1,
+    borderColor: 'rgba(222, 210, 190, 0.76)',
+    position: 'relative',
+  },
+  motionFieldGrid: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#f5f1ee',
+    opacity: 0.92,
+  },
+  motionBlockLarge: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 26,
+    backgroundColor: 'rgba(255, 196, 64, 0.9)',
+    bottom: 28,
+    left: '35%',
+    shadowColor: '#e6a52a',
+    shadowOpacity: 0.24,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 12 },
+  },
+  motionBlockMedium: {
+    position: 'absolute',
+    width: 90,
+    height: 90,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 192, 218, 0.92)',
+    bottom: 46,
+    right: '24%',
+    shadowColor: '#ce89aa',
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
+  },
+  motionRingLarge: {
+    position: 'absolute',
+    width: 118,
+    height: 118,
+    borderRadius: 999,
+    borderWidth: 14,
+    borderColor: 'rgba(114, 185, 255, 0.88)',
+    right: 34,
+    bottom: 30,
+    backgroundColor: 'rgba(236, 247, 255, 0.5)',
+  },
+  motionRingSmall: {
+    position: 'absolute',
+    width: 72,
+    height: 72,
+    borderRadius: 999,
+    borderWidth: 10,
+    borderColor: 'rgba(91, 160, 248, 0.82)',
+    right: 168,
+    bottom: 88,
+    backgroundColor: 'rgba(240, 247, 255, 0.46)',
+  },
+  motionDotsRow: {
+    position: 'absolute',
+    top: 24,
+    left: 22,
+    right: 22,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 22,
+  },
+  motionDot: {
+    width: 18,
+    height: 18,
+    borderRadius: 999,
+    shadowColor: '#b89c7e',
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 8 },
   },
   tickerWrap: {
     backgroundColor: palette.dark,
