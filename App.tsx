@@ -4,6 +4,7 @@ import {
   Easing,
   Image,
   Linking,
+  Modal,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -16,6 +17,37 @@ import {
 const portalCover = require('./assets/course-portals/xingxiangsiwei-cover.png');
 
 type PageKey = 'home' | 'courses' | 'agents';
+
+type CourseStep = {
+  step: number;
+  title: string;
+  content: string;
+  imageCaption?: string;
+};
+
+type CourseItem = {
+  id: number;
+  title: string;
+  subtitle: string;
+  tools: string[];
+  tags: string[];
+  brief: string;
+  portalUrl?: string;
+  hasVideo: boolean;
+  videoNote?: string;
+  coverType: 'image' | 'abstract';
+  coverSource?: any;
+  coverPalette: {
+    base: string;
+    accent: string;
+    text: string;
+  };
+  story: {
+    intro: string;
+    steps: CourseStep[];
+    reflection?: string;
+  };
+};
 
 type SectionCard = {
   key: PageKey;
@@ -85,21 +117,193 @@ const tickerItems = [
   'AI 辅助创作',
 ];
 
-const coursePortal = {
-  title: '形象思维与工程语言',
-  tools: '可灵 / Gemini / DeepSeek',
-  link: 'https://mooc1.chaoxing.com/course-ans/courseportal/258585261.html',
-  summary:
-    '先搜索课程相关信息，再观察其他已上线课程页面的视觉语言，发现整体偏艺术与文艺，于是尝试把工程结构和人文草图感结合起来。',
-  process: [
-    '看到课程后先做资料搜索，并对同系列门户页面做风格观察，确认需要一个更有艺术气质的方向。',
-    '联想到达芬奇人体解剖图的结构感，用它去借力工程语言和手稿气息之间的联系。',
-    '先让 DeepSeek 帮忙写提示词，在不同平台测试画面，再最终选择可灵输出更贴近目标的主视觉。',
-    '接着用 Gemini 讨论课程标题的排版方向，最终形成现在这种黑色块面与线稿底图相互压住的版式。',
-  ],
-  videoNote:
-    '视频同样沿用了这条视觉线索。在线版后续可以改成真正的视频弹层或独立播放页，现在先保留醒目的展示入口。',
-};
+const courses: CourseItem[] = [
+  {
+    id: 1,
+    title: '形象思维与工程语言',
+    subtitle: '课程封面设计 · AI 图像生成',
+    tools: ['可灵 Kling', 'Gemini', 'DeepSeek'],
+    tags: ['课程封面', '达芬奇风格', '工程制图', '文艺理工'],
+    brief:
+      '借鉴达芬奇人体解剖图的手稿美学，为《形象思维与工程语言》课程设计兼具理性与艺术气质的封面与配套视频。',
+    portalUrl: 'https://mooc1.chaoxing.com/course-ans/courseportal/258585261.html',
+    hasVideo: true,
+    videoNote: '视频采用与封面相同的手稿风格，后续可继续接入真实播放或弹层观看。',
+    coverType: 'image',
+    coverSource: portalCover,
+    coverPalette: {
+      base: '#e8dfd1',
+      accent: '#5a7248',
+      text: '#1c2414',
+    },
+    story: {
+      intro:
+        '这次创作起源于看到《形象思维与工程语言》这门课程。作为一门融合理性思维与艺术感知的工科课程，它的视觉呈现方式本身就应该有所讲究。',
+      steps: [
+        {
+          step: 1,
+          title: '发现契机',
+          content:
+            '先搜索课程相关信息，并观察同系列课程已上线页面。整体风格偏艺术与文艺，这与常规工科课程形成对比，也让我意识到这门课值得有一个更讲究的视觉方向。',
+        },
+        {
+          step: 2,
+          title: '灵感碰撞',
+          content:
+            '在思考什么样的视觉语言能同时承载工程的严谨与形象思维的感性时，我联想到达芬奇的人体解剖图手稿，那种科学精度和艺术张力并存的状态非常契合这个命题。',
+        },
+        {
+          step: 3,
+          title: '提示词创作',
+          content:
+            '确定方向后，让 DeepSeek 协助生成和润色提示词，反复强调手稿质感、工程制图线条、复古羊皮纸底色和机械零件多视角结构，让画面具备手稿与蓝图叠合的感觉。',
+        },
+        {
+          step: 4,
+          title: '多平台测试',
+          content:
+            '把提示词分别放到不同平台测试，对比它们在工程线图精准度与复古手稿气质上的表现。最终可灵更接近我想要的线条力度和整体质感，因此成为最终出图平台。',
+        },
+        {
+          step: 5,
+          title: '排版定稿',
+          content:
+            '图像生成完成后，再用 Gemini 探索课程标题的排版方式。最终确定了右侧半透明灰底加粗黑字的方案，让标题与底图形成明显对比，同时不破坏整张画面的手稿感。',
+        },
+        {
+          step: 6,
+          title: '视频延伸',
+          content:
+            '封面定稿后，我继续为课程制作配套视频，让线条像被逐步描绘出来一样，让静止的工程手稿拥有动态生成的过程感。',
+        },
+      ],
+      reflection:
+        '这次创作最大的收获，是找到了一种把 AI 工具与历史视觉语言结合的方法。达芬奇留下的不只是画作，也是一种兼顾科学与美学的观察方式。',
+    },
+  },
+  {
+    id: 2,
+    title: '跨境电子商务',
+    subtitle: '课程封面设计 · 科技风格迭代',
+    tools: ['即梦 Jimeng', 'DeepSeek'],
+    tags: ['课程封面', '科技感', '全球电商', '风格迭代'],
+    brief:
+      '以 DeepSeek 生成提示词、即梦平台出图，历经两轮风格迭代，从基础电商元素逐步推进到更现代的 AI 与全球网络叙事。',
+    portalUrl: 'https://mooc1.chaoxing.com/course-ans/courseportal/258113344.html',
+    hasVideo: false,
+    coverType: 'abstract',
+    coverPalette: {
+      base: '#dde7f7',
+      accent: '#49639b',
+      text: '#21324f',
+    },
+    story: {
+      intro:
+        '《跨境电子商务》是一门自带全球互联感的课程。它涉及国际贸易、数字营销、平台运营与供应链，本身就非常适合做更具当代感的科技视觉。',
+      steps: [
+        {
+          step: 1,
+          title: '定位课程调性',
+          content:
+            '先从课程名称出发梳理视觉关键词: 全球视野、数字平台、物流网络、交易流转。风格需要同时体现专业感和行业速度感。',
+        },
+        {
+          step: 2,
+          title: '生成初版提示词',
+          content:
+            '用 DeepSeek 辅助生成第一版图像提示词，聚焦蓝色地球仪、购物车、包裹和科技线条等基础电商视觉元素。',
+        },
+        {
+          step: 3,
+          title: '第一次出图与问题',
+          content:
+            '第一轮在即梦平台出图后，画面偏向图标堆叠，虽然解释了电商元素，但缺乏行业升级感，也没有把 AI 与全球网络的语境带进去。',
+        },
+        {
+          step: 4,
+          title: '调整方向',
+          content:
+            '于是改成更强调场景叙事的提示词，加入 AI 机器人助手、全球节点、悬浮 UI 和数据流，把叙事从静态图解推进到当代科技环境。',
+        },
+        {
+          step: 5,
+          title: '第二轮成型',
+          content:
+            '第二轮画面的蓝紫渐变、发光网络与平台元素明显更有“AI + 全球电商”的现代感，也更贴近课程的时代语境。',
+        },
+        {
+          step: 6,
+          title: '复盘',
+          content:
+            '这次让我更明确一件事: 课程封面不该只是关键词图解，而应该讲述一个行业正在发生的故事，视觉叙事要跟上课程背后的时代背景。',
+        },
+      ],
+      reflection:
+        '第一版不是失败，而是给第二版提供了判断依据。AI 生成的价值之一，就是允许我低成本快速试错，直到找到真正贴题的方向。',
+    },
+  },
+  {
+    id: 3,
+    title: '天然药物化学',
+    subtitle: '课程封面设计 · 中药文化与地域特色',
+    tools: ['即梦 Jimeng', 'Gemini', 'GPT-4'],
+    tags: ['课程封面', '中药', '云南扎染', '水彩风格'],
+    brief:
+      '尝试把云南扎染工艺与天然药物元素结合起来，通过多平台迭代，让课程封面同时拥有地域文化与学科专业性的表达。',
+    hasVideo: false,
+    coverType: 'abstract',
+    coverPalette: {
+      base: '#dce8ee',
+      accent: '#547789',
+      text: '#234352',
+    },
+    story: {
+      intro:
+        '《天然药物化学》的封面设计来自一次“地域文化 + 学科特色”的融合尝试。教师希望画面带出云南特色，而不是只停留在传统化学课程的常见视觉上。',
+      steps: [
+        {
+          step: 1,
+          title: '文化溯源',
+          content:
+            '想到云南特色时，我先联想到扎染。它的蓝色调、晕染肌理和植物纹样都能和天然药物的气质形成很自然的联系。',
+        },
+        {
+          step: 2,
+          title: '提示词构思',
+          content:
+            '接着让 GPT 协助整理提示词，把云南扎染纹理、药用植物、化学分子结构、水彩笔触等关键词组合起来，形成既传统又现代的描述框架。',
+        },
+        {
+          step: 3,
+          title: '背景图探索',
+          content:
+            '先专门做扎染背景图，在即梦和 Gemini 之间对比“渐变晕染”和“传统工艺肌理”的表现，找到既有文化味道又能为主体留空间的版本。',
+          imageCaption: '这里后续可以补上扎染背景图的过程图。',
+        },
+        {
+          step: 4,
+          title: '主体图测试',
+          content:
+            '背景确定后，再把药用植物、切片、中药材和化学结构式结合到主体设计里，比较不同平台在植物细节、色调与构图上的优缺点。',
+        },
+        {
+          step: 5,
+          title: '风格融合',
+          content:
+            '最终形成水彩笔触和扎染底色并置的方案: 前景是暖色药材，背景是蓝色扎染纹理，右上角保留结构式，让传统文化和专业属性一起出现。',
+        },
+        {
+          step: 6,
+          title: '定稿复盘',
+          content:
+            '这次最难的是如何让文化感和专业感保持平衡。最终找到的答案是: 文化作为底色，专业作为主体，让两者自然共生。',
+        },
+      ],
+      reflection:
+        'AI 工具在这里不只是执行者，更像创作过程中的对话伙伴。从提示词构思到跨平台对比，每一步都帮助我逼近更合适的表达方式。',
+    },
+  },
+];
 
 export default function App() {
   const { width } = useWindowDimensions();
@@ -328,6 +532,13 @@ function CoursesPage({
   isMobile: boolean;
   onNavigate: (page: PageKey) => void;
 }) {
+  const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
+  const [courseTab, setCourseTab] = useState<'story' | 'video'>('story');
+
+  useEffect(() => {
+    if (!selectedCourse) setCourseTab('story');
+  }, [selectedCourse]);
+
   return (
     <View style={styles.subPage}>
       <PageHeader
@@ -338,49 +549,203 @@ function CoursesPage({
         onBack={() => onNavigate('home')}
       />
 
-      <View style={[styles.courseLayout, isMobile && styles.courseLayoutMobile]}>
-        <View style={[styles.courseMain, isMobile && styles.fullWidth]}>
-          <View style={styles.courseImageWrap}>
-            <Image source={portalCover} style={styles.courseImage} resizeMode="cover" />
-            <View style={styles.courseOverlay}>
-              <Text style={styles.courseOverlayTag}>课程门户设计 / 已完成封面</Text>
-              <Text style={styles.courseOverlayTitle}>{coursePortal.title}</Text>
-              <Text style={styles.courseOverlayTools}>{coursePortal.tools}</Text>
-            </View>
-          </View>
+      <View style={[styles.courseGrid, isMobile && styles.courseGridMobile]}>
+        {courses.map((course) => (
+          <Pressable
+            key={course.id}
+            onPress={() => setSelectedCourse(course)}
+            style={({ pressed }) => [
+              styles.courseCard,
+              pressed && styles.directoryCardPressed,
+              isMobile && styles.fullWidth,
+            ]}
+          >
+            <CourseCover course={course} compact />
+            <View style={styles.courseCardBody}>
+              <Text style={styles.courseCardTitle}>{course.title}</Text>
+              <Text style={styles.courseCardSubtitle}>{course.subtitle}</Text>
+              <Text style={styles.courseCardBrief}>{course.brief}</Text>
 
-          <View style={[styles.courseActionRow, isMobile && styles.courseActionRowMobile]}>
-            <Panel style={styles.videoPanel}>
-              <Text style={styles.panelEyebrow}>背景视频位</Text>
-              <Text style={styles.videoPanelTitle}>后续可升级为真实视频弹层</Text>
-              <Text style={styles.panelText}>{coursePortal.videoNote}</Text>
-            </Panel>
-
-            <Panel style={styles.portalLinkPanel}>
-              <Text style={styles.panelEyebrow}>课程入口</Text>
-              <Text style={styles.portalLinkTitle}>在线查看课程门户</Text>
-              <ActionButton label="打开课程门户" kind="dark" onPress={() => Linking.openURL(coursePortal.link)} />
-            </Panel>
-          </View>
-        </View>
-
-        <View style={[styles.courseSidebar, isMobile && styles.fullWidth]}>
-          <Panel>
-            <Text style={styles.panelEyebrow}>课程概述</Text>
-            <Text style={styles.panelTitle}>{coursePortal.title}</Text>
-            <Text style={styles.panelText}>{coursePortal.summary}</Text>
-          </Panel>
-
-          <Panel>
-            <Text style={styles.panelEyebrow}>创作思路</Text>
-            {coursePortal.process.map((item) => (
-              <View key={item} style={styles.bulletRow}>
-                <View style={styles.bulletDot} />
-                <Text style={styles.bulletText}>{item}</Text>
+              <View style={styles.courseCardTags}>
+                {course.tools.slice(0, 2).map((tool) => (
+                  <View key={tool} style={styles.courseToolPill}>
+                    <Text style={styles.courseToolPillText}>{tool}</Text>
+                  </View>
+                ))}
+                {course.hasVideo && (
+                  <View style={styles.courseVideoPill}>
+                    <Text style={styles.courseVideoPillText}>视频</Text>
+                  </View>
+                )}
               </View>
-            ))}
-          </Panel>
+            </View>
+          </Pressable>
+        ))}
+
+        <View style={[styles.courseCard, styles.coursePlaceholderCard, isMobile && styles.fullWidth]}>
+          <View style={styles.coursePlaceholderIcon}>
+            <Text style={styles.coursePlaceholderIconText}>+</Text>
+          </View>
+          <Text style={styles.coursePlaceholderTitle}>更多课程</Text>
+          <Text style={styles.coursePlaceholderText}>继续把新的课程封面、配套视频与创作思路加进来。</Text>
         </View>
+      </View>
+
+      <Modal
+        visible={!!selectedCourse}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedCourse(null)}
+      >
+        {selectedCourse ? (
+          <Pressable style={styles.modalBackdrop} onPress={() => setSelectedCourse(null)}>
+            <Pressable
+              onPress={(event) => event.stopPropagation()}
+              style={[styles.courseModalCard, isMobile && styles.courseModalCardMobile]}
+            >
+              <View style={[styles.courseModalVisual, isMobile && styles.courseModalVisualMobile]}>
+                <Pressable style={styles.courseModalCoverWrap}>
+                  <CourseCover course={selectedCourse} />
+                </Pressable>
+
+                <View style={styles.courseModalBottom}>
+                  <View style={styles.courseModalToolWrap}>
+                    {selectedCourse.tools.map((tool) => (
+                      <View key={tool} style={styles.courseModalToolPill}>
+                        <Text style={styles.courseModalToolText}>{tool}</Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  {selectedCourse.portalUrl ? (
+                    <ActionButton
+                      label="进入课程门户"
+                      kind="dark"
+                      onPress={() => Linking.openURL(selectedCourse.portalUrl!)}
+                    />
+                  ) : null}
+                </View>
+              </View>
+
+              <View style={styles.courseModalContent}>
+                <Pressable onPress={() => setSelectedCourse(null)} style={styles.modalClose}>
+                  <Text style={styles.modalCloseText}>×</Text>
+                </Pressable>
+
+                <Text style={styles.modalTitle}>{selectedCourse.title}</Text>
+                <Text style={styles.modalSubtitle}>{selectedCourse.subtitle}</Text>
+                <Text style={styles.modalBrief}>{selectedCourse.brief}</Text>
+
+                <View style={styles.modalTagWrap}>
+                  {selectedCourse.tags.map((tag) => (
+                    <View key={tag} style={styles.modalTag}>
+                      <Text style={styles.modalTagText}>#{tag}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                <View style={styles.modalTabs}>
+                  <Pressable
+                    onPress={() => setCourseTab('story')}
+                    style={[styles.modalTab, courseTab === 'story' && styles.modalTabActive]}
+                  >
+                    <Text style={[styles.modalTabText, courseTab === 'story' && styles.modalTabTextActive]}>
+                      创作思路
+                    </Text>
+                  </Pressable>
+                  {selectedCourse.hasVideo ? (
+                    <Pressable
+                      onPress={() => setCourseTab('video')}
+                      style={[styles.modalTab, courseTab === 'video' && styles.modalTabActive]}
+                    >
+                      <Text style={[styles.modalTabText, courseTab === 'video' && styles.modalTabTextActive]}>
+                        配套视频
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+
+                <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent}>
+                  {courseTab === 'story' ? (
+                    <>
+                      <Text style={styles.modalIntro}>{selectedCourse.story.intro}</Text>
+                      {selectedCourse.story.steps.map((step, index) => (
+                        <View key={`${selectedCourse.id}-${step.step}`} style={styles.stepRow}>
+                          <View style={styles.stepColumn}>
+                            <View style={styles.stepCircle}>
+                              <Text style={styles.stepCircleText}>{step.step}</Text>
+                            </View>
+                            {index < selectedCourse.story.steps.length - 1 ? <View style={styles.stepLine} /> : null}
+                          </View>
+                          <View style={styles.stepContent}>
+                            <Text style={styles.stepTitle}>{step.title}</Text>
+                            <Text style={styles.stepText}>{step.content}</Text>
+                            {step.imageCaption ? <Text style={styles.stepCaption}>{step.imageCaption}</Text> : null}
+                          </View>
+                        </View>
+                      ))}
+
+                      {selectedCourse.story.reflection ? (
+                        <View style={styles.reflectionBox}>
+                          <Text style={styles.reflectionText}>{selectedCourse.story.reflection}</Text>
+                        </View>
+                      ) : null}
+                    </>
+                  ) : (
+                    <View style={styles.videoPlaceholderBox}>
+                      <View style={styles.videoPlaceholderRing}>
+                        <Text style={styles.videoPlaceholderPlay}>▶</Text>
+                      </View>
+                      <Text style={styles.videoPlaceholderTitle}>视频即将接入</Text>
+                      <Text style={styles.videoPlaceholderText}>{selectedCourse.videoNote}</Text>
+                    </View>
+                  )}
+                </ScrollView>
+              </View>
+            </Pressable>
+          </Pressable>
+        ) : null}
+      </Modal>
+    </View>
+  );
+}
+
+function CourseCover({ course, compact = false }: { course: CourseItem; compact?: boolean }) {
+  if (course.coverType === 'image' && course.coverSource) {
+    return (
+      <View style={[styles.courseCoverWrap, compact && styles.courseCoverWrapCompact]}>
+        <Image source={course.coverSource} style={styles.courseCoverImage} resizeMode="cover" />
+        <View style={styles.courseCoverOverlay}>
+          <Text style={styles.courseCoverOverlayTag}>{course.subtitle}</Text>
+          <Text style={styles.courseCoverOverlayTitle}>{course.title}</Text>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View
+      style={[
+        styles.courseCoverWrap,
+        compact && styles.courseCoverWrapCompact,
+        { backgroundColor: course.coverPalette.base },
+      ]}
+    >
+      <View
+        style={[
+          styles.abstractOrbLarge,
+          { backgroundColor: `${course.coverPalette.accent}22`, borderColor: `${course.coverPalette.accent}33` },
+        ]}
+      />
+      <View
+        style={[
+          styles.abstractOrbSmall,
+          { backgroundColor: `${course.coverPalette.accent}1A`, borderColor: `${course.coverPalette.accent}2B` },
+        ]}
+      />
+      <View style={styles.abstractCoverTextWrap}>
+        <Text style={[styles.abstractCoverTag, { color: course.coverPalette.accent }]}>{course.subtitle}</Text>
+        <Text style={[styles.abstractCoverTitle, { color: course.coverPalette.text }]}>{course.title}</Text>
       </View>
     </View>
   );
@@ -918,6 +1283,457 @@ const styles = StyleSheet.create({
   courseSidebar: {
     flex: 0.82,
     gap: 18,
+  },
+  courseGrid: {
+    flexDirection: 'row',
+    gap: 20,
+    flexWrap: 'wrap',
+  },
+  courseGridMobile: {
+    flexDirection: 'column',
+  },
+  courseCard: {
+    flexBasis: '31%',
+    minWidth: 280,
+    backgroundColor: '#faf8f2',
+    borderRadius: 22,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(90,114,72,0.14)',
+  },
+  coursePlaceholderCard: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 28,
+    minHeight: 280,
+    borderStyle: 'dashed',
+    backgroundColor: 'rgba(90,114,72,0.03)',
+  },
+  courseCardBody: {
+    padding: 16,
+  },
+  courseCardTitle: {
+    color: '#1c2414',
+    fontFamily: 'Georgia',
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  courseCardSubtitle: {
+    color: '#8a9a78',
+    fontSize: 12,
+    letterSpacing: 0.4,
+    marginBottom: 8,
+  },
+  courseCardBrief: {
+    color: '#6a7a58',
+    fontSize: 13,
+    lineHeight: 22,
+    marginBottom: 14,
+  },
+  courseCardTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  courseToolPill: {
+    backgroundColor: 'rgba(90,114,72,0.08)',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(90,114,72,0.14)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  courseToolPillText: {
+    color: palette.accent,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  courseVideoPill: {
+    backgroundColor: 'rgba(154,107,48,0.1)',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(154,107,48,0.18)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  courseVideoPillText: {
+    color: '#9a6b30',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  coursePlaceholderIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(90,114,72,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(90,114,72,0.16)',
+    marginBottom: 14,
+  },
+  coursePlaceholderIconText: {
+    color: palette.accent,
+    fontSize: 24,
+    lineHeight: 24,
+  },
+  coursePlaceholderTitle: {
+    color: '#1c2414',
+    fontFamily: 'Georgia',
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  coursePlaceholderText: {
+    color: '#8a9a78',
+    textAlign: 'center',
+    lineHeight: 22,
+    fontSize: 13,
+  },
+  courseCoverWrap: {
+    height: 360,
+    overflow: 'hidden',
+    position: 'relative',
+    justifyContent: 'flex-end',
+  },
+  courseCoverWrapCompact: {
+    height: 220,
+  },
+  courseCoverImage: {
+    width: '100%',
+    height: '100%',
+  },
+  courseCoverOverlay: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 16,
+    backgroundColor: 'rgba(250,248,242,0.9)',
+    borderRadius: 18,
+    padding: 14,
+  },
+  courseCoverOverlayTag: {
+    color: '#8a9a78',
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 6,
+  },
+  courseCoverOverlayTitle: {
+    color: '#1c2414',
+    fontFamily: 'Georgia',
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '700',
+  },
+  abstractOrbLarge: {
+    position: 'absolute',
+    width: 180,
+    height: 180,
+    borderRadius: 999,
+    top: 22,
+    right: -30,
+    borderWidth: 1,
+  },
+  abstractOrbSmall: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 999,
+    bottom: 28,
+    left: -20,
+    borderWidth: 1,
+  },
+  abstractCoverTextWrap: {
+    padding: 22,
+  },
+  abstractCoverTag: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  abstractCoverTitle: {
+    fontFamily: 'Georgia',
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: '700',
+    maxWidth: '76%',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(16,20,12,0.58)',
+    padding: 18,
+    justifyContent: 'center',
+  },
+  courseModalCard: {
+    maxHeight: '92%',
+    width: '100%',
+    flexDirection: 'row',
+    backgroundColor: '#faf8f2',
+    borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(90,114,72,0.18)',
+  },
+  courseModalCardMobile: {
+    flexDirection: 'column',
+  },
+  courseModalVisual: {
+    width: '40%',
+    backgroundColor: '#141c0e',
+    padding: 14,
+    justifyContent: 'space-between',
+  },
+  courseModalVisualMobile: {
+    width: '100%',
+    minHeight: 300,
+  },
+  courseModalCoverWrap: {
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  courseModalBottom: {
+    gap: 14,
+    marginTop: 14,
+  },
+  courseModalToolWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  courseModalToolPill: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: 'rgba(200,220,180,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(200,220,180,0.2)',
+  },
+  courseModalToolText: {
+    color: '#d8ecc8',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  courseModalContent: {
+    flex: 1,
+    padding: 22,
+    position: 'relative',
+  },
+  modalClose: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 34,
+    height: 34,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(250,248,242,0.95)',
+    borderWidth: 1,
+    borderColor: 'rgba(90,114,72,0.18)',
+    zIndex: 2,
+  },
+  modalCloseText: {
+    color: palette.accent,
+    fontSize: 18,
+    lineHeight: 18,
+  },
+  modalTitle: {
+    color: '#1c2414',
+    fontFamily: 'Georgia',
+    fontSize: 30,
+    lineHeight: 38,
+    fontWeight: '700',
+    marginBottom: 4,
+    paddingRight: 36,
+  },
+  modalSubtitle: {
+    color: '#8a9a78',
+    fontSize: 13,
+    marginBottom: 10,
+  },
+  modalBrief: {
+    color: '#4a5a3a',
+    fontSize: 14,
+    lineHeight: 24,
+    marginBottom: 14,
+  },
+  modalTagWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 14,
+  },
+  modalTag: {
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: 'rgba(90,114,72,0.07)',
+    borderWidth: 1,
+    borderColor: 'rgba(90,114,72,0.14)',
+  },
+  modalTagText: {
+    color: palette.accent,
+    fontSize: 11,
+  },
+  modalTabs: {
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+    gap: 4,
+    padding: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(90,114,72,0.07)',
+    borderWidth: 1,
+    borderColor: 'rgba(90,114,72,0.12)',
+    marginBottom: 14,
+  },
+  modalTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 999,
+  },
+  modalTabActive: {
+    backgroundColor: '#faf8f2',
+  },
+  modalTabText: {
+    color: '#8a9a78',
+    fontSize: 13,
+  },
+  modalTabTextActive: {
+    color: palette.accent,
+    fontWeight: '700',
+  },
+  modalScroll: {
+    flex: 1,
+  },
+  modalScrollContent: {
+    paddingBottom: 20,
+  },
+  modalIntro: {
+    color: '#4a5a3a',
+    fontSize: 14,
+    lineHeight: 26,
+    paddingBottom: 16,
+    marginBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(90,114,72,0.1)',
+  },
+  stepRow: {
+    flexDirection: 'row',
+    gap: 14,
+    paddingBottom: 16,
+    marginBottom: 4,
+  },
+  stepColumn: {
+    alignItems: 'center',
+  },
+  stepCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(90,114,72,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(90,114,72,0.22)',
+  },
+  stepCircleText: {
+    color: palette.accent,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  stepLine: {
+    width: 1,
+    flex: 1,
+    minHeight: 14,
+    backgroundColor: 'rgba(90,114,72,0.18)',
+    marginTop: 6,
+  },
+  stepContent: {
+    flex: 1,
+  },
+  stepTitle: {
+    color: '#1c2414',
+    fontFamily: 'Georgia',
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  stepText: {
+    color: '#5a6a4a',
+    fontSize: 13,
+    lineHeight: 24,
+  },
+  stepCaption: {
+    marginTop: 10,
+    color: '#6b7a5a',
+    fontSize: 12,
+    lineHeight: 20,
+    fontStyle: 'italic',
+    backgroundColor: 'rgba(90,114,72,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(90,114,72,0.12)',
+    padding: 12,
+    borderRadius: 14,
+  },
+  reflectionBox: {
+    marginTop: 10,
+    backgroundColor: 'rgba(90,114,72,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(90,114,72,0.15)',
+    borderLeftWidth: 3,
+    borderLeftColor: 'rgba(90,114,72,0.35)',
+    borderRadius: 16,
+    padding: 14,
+  },
+  reflectionText: {
+    color: '#4a5a3a',
+    fontSize: 13,
+    lineHeight: 24,
+    fontStyle: 'italic',
+  },
+  videoPlaceholderBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    minHeight: 260,
+    backgroundColor: 'rgba(90,114,72,0.05)',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(90,114,72,0.22)',
+    borderRadius: 18,
+    padding: 24,
+  },
+  videoPlaceholderRing: {
+    width: 52,
+    height: 52,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(90,114,72,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(90,114,72,0.25)',
+  },
+  videoPlaceholderPlay: {
+    color: palette.accent,
+    fontSize: 18,
+    marginLeft: 2,
+  },
+  videoPlaceholderTitle: {
+    color: '#7a9068',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  videoPlaceholderText: {
+    color: '#6b7a5a',
+    fontSize: 13,
+    lineHeight: 24,
+    textAlign: 'center',
+    maxWidth: 380,
   },
   courseImageWrap: {
     borderRadius: 28,
