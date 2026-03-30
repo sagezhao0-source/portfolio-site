@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
+  Easing,
   Image,
   Linking,
   Pressable,
@@ -13,223 +15,463 @@ import {
 
 const portalCover = require('./assets/course-portals/xingxiangsiwei-cover.png');
 
+type PageKey = 'home' | 'courses' | 'agents';
+
+type SectionCard = {
+  key: PageKey;
+  title: string;
+  subtitle: string;
+  description: string;
+  tag: string;
+  color: string;
+  bg: string;
+  border: string;
+};
+
 const palette = {
-  bg: '#f6f0e7',
-  paper: '#fbf6ee',
-  paperSoft: 'rgba(251, 246, 238, 0.78)',
-  ink: '#2f241d',
-  muted: '#736456',
-  line: 'rgba(88, 67, 49, 0.18)',
-  warm: '#d7b38d',
-  olive: '#9dab92',
-  stone: '#9aa3a8',
-  smoke: '#d7d0c4',
-  charcoal: '#251d18',
+  bg: '#f7f0dc',
+  bgDeep: '#ede3c5',
+  paper: '#faf6ec',
+  paperSoft: 'rgba(250, 246, 236, 0.78)',
+  ink: '#1a1008',
+  muted: '#8a7255',
+  accent: '#9a6b30',
+  accentLight: 'rgba(184,130,74,0.13)',
+  accentBorder: 'rgba(184,130,74,0.28)',
+  dark: '#241808',
+  green: '#3d5a4c',
+  greenBg: 'rgba(61,90,76,0.08)',
+  greenBorder: 'rgba(61,90,76,0.2)',
+  red: '#7a3b3b',
+  redBg: 'rgba(122,59,59,0.08)',
+  redBorder: 'rgba(122,59,59,0.2)',
 };
 
-const coursePortal = {
-  title: '形象思维与工程语言',
-  subtitle: '课程门户设计',
-  tools: '可灵 / Gemini / DeepSeek',
-  link: 'https://mooc1.chaoxing.com/course-ans/courseportal/258585261.html',
-  videoPath: 'd:\\超星工作内容\\日志\\上海交大 形象思维与工程语言\\vidu-video-3059543692015756.mp4',
-  summary:
-    '先根据课程名称搜索信息，再观察同系列课程已上线页面，发现整体风格偏艺术、文艺，于是转向更具草图感和人文气息的视觉方向。',
-  process: [
-    '从课程气质出发，决定参考达芬奇人体解剖图与工程草图的结合感，让工程结构拥有更有人文温度的图像语言。',
-    '先让 DeepSeek 帮忙整理提示词，在多个平台测试画面气质，最后选定可灵生成更贴近课程氛围的主视觉。',
-    '再用 Gemini 讨论课程标题的排版方向，让黑体块面和底图线稿形成张力，最后确定目前这版封面。',
-    '视频也沿用了同样的参考方向，所以网站里会预留一个不遮挡主图的背景视频位置。',
-  ],
-};
-
-const agentTracks = [
+const sections: SectionCard[] = [
   {
-    title: '智能体项目展示',
-    note:
-      '这里先作为第二板块的结构占位，后面可以按智能体名称、能力、工作流、界面截图继续往里填。',
+    key: 'courses',
+    title: '课程门户设计',
+    subtitle: 'COURSE PORTAL',
+    description:
+      '为课程设计 AI 辅助视觉方案，从封面到配套视频，每一张图与每一段画面背后都记录完整的创作思路与工具测试过程。',
+    tag: '可灵 · Gemini · DeepSeek',
+    color: palette.green,
+    bg: palette.greenBg,
+    border: palette.greenBorder,
   },
   {
-    title: '能力拆解',
-    note:
-      '建议后续放成 3 列：任务理解、生成协作、交互设计。这样和课程门户形成内容层次上的区分。',
+    key: 'agents',
+    title: 'AI 智能体案例',
+    subtitle: 'AGENTS',
+    description:
+      '基于 Dify、Coze、LangChain 等平台构建的智能体实践。这里会继续整理客服、内容与效率类场景的搭建逻辑与落地记录。',
+    tag: 'Dify · Coze · LangChain',
+    color: palette.red,
+    bg: palette.redBg,
+    border: palette.redBorder,
   },
 ];
 
+const tickerItems = [
+  '课程门户设计',
+  'AI 图像生成',
+  '可灵 · Kling',
+  'Gemini',
+  '智能体构建',
+  'Dify · Coze',
+  'LangChain',
+  '创作思路记录',
+  '视觉封面设计',
+  'AI 辅助创作',
+];
+
+const coursePortal = {
+  title: '形象思维与工程语言',
+  tools: '可灵 / Gemini / DeepSeek',
+  link: 'https://mooc1.chaoxing.com/course-ans/courseportal/258585261.html',
+  summary:
+    '先搜索课程相关信息，再观察其他已上线课程页面的视觉语言，发现整体偏艺术与文艺，于是尝试把工程结构和人文草图感结合起来。',
+  process: [
+    '看到课程后先做资料搜索，并对同系列门户页面做风格观察，确认需要一个更有艺术气质的方向。',
+    '联想到达芬奇人体解剖图的结构感，用它去借力工程语言和手稿气息之间的联系。',
+    '先让 DeepSeek 帮忙写提示词，在不同平台测试画面，再最终选择可灵输出更贴近目标的主视觉。',
+    '接着用 Gemini 讨论课程标题的排版方向，最终形成现在这种黑色块面与线稿底图相互压住的版式。',
+  ],
+  videoNote:
+    '视频同样沿用了这条视觉线索。在线版后续可以改成真正的视频弹层或独立播放页，现在先保留醒目的展示入口。',
+};
+
 export default function App() {
   const { width } = useWindowDimensions();
-  const isMobile = width < 980;
+  const isMobile = width < 920;
+  const [page, setPage] = useState<PageKey>('home');
+  const fade = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    fade.setValue(0);
+    Animated.timing(fade, {
+      toValue: 1,
+      duration: 320,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [fade, page]);
+
+  const repeatedTicker = useMemo(
+    () => [...tickerItems, ...tickerItems, ...tickerItems].join('  ◆  '),
+    [],
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         <View style={styles.page}>
-          <View style={styles.washTop} />
-          <View style={styles.washLeft} />
-          <View style={styles.washRight} />
+          <DecorativeBlobs />
+          <TopNav page={page} onNavigate={setPage} isMobile={isMobile} />
 
-          <View style={[styles.nav, isMobile && styles.navMobile]}>
-            <Text style={styles.brand}>Portfolio Draft</Text>
-            <View style={[styles.navLinks, isMobile && styles.navLinksMobile]}>
-              <Text style={styles.navLink}>课程门户设计</Text>
-              <Text style={styles.navLink}>智能体</Text>
-              <Text style={styles.navLink}>创作方法</Text>
-            </View>
-          </View>
+          <Animated.View style={{ opacity: fade }}>
+            {page === 'home' && (
+              <>
+                <HomeHero isMobile={isMobile} onNavigate={setPage} />
+                <Ticker text={repeatedTicker} />
+                <DirectorySection isMobile={isMobile} onNavigate={setPage} />
+                <StatsStrip isMobile={isMobile} />
+                <QuoteSection />
+              </>
+            )}
 
-          <View style={[styles.hero, isMobile && styles.heroMobile]}>
-            <View style={styles.heroCopy}>
-              <Text style={styles.eyebrow}>个人作品网站 / 第一版结构预览</Text>
-              <Text style={[styles.heroTitle, isMobile && styles.heroTitleMobile]}>
-                把课程门户设计和智能体项目，整理成一个方便分享的作品网站。
-              </Text>
-              <Text style={styles.heroText}>
-                这版先优先搭出网站样子和叙事顺序。页面分成两个主板块，课程门户设计会按课程继续扩展，
-                每门课都可以带封面图、视频和创作思路；智能体板块会单独保留展示区，不和课程项目混在一起。
-              </Text>
-
-              <View style={[styles.heroActions, isMobile && styles.heroActionsMobile]}>
-                <ActionButton
-                  label="打开课程门户"
-                  onPress={() => Linking.openURL(coursePortal.link)}
-                  kind="dark"
-                />
-                <ActionButton
-                  label="查看本地视频位置"
-                  onPress={() => {}}
-                  kind="light"
-                />
-              </View>
-            </View>
-
-            <View style={styles.heroPanel}>
-              <Text style={styles.heroPanelLabel}>当前已接入素材</Text>
-              <Text style={styles.heroPanelTitle}>1 张课程封面图 + 1 个课程视频</Text>
-              <Text style={styles.heroPanelText}>
-                现在先把“形象思维与工程语言”放成首个课程案例。后续你再给我更多课程资料，我就能按同样方式继续加卡片。
-              </Text>
-            </View>
-          </View>
-
-          <SectionIntro
-            eyebrow="Part 01"
-            title="课程门户设计"
-            text="按课程拆分展示。每门课程是一张大卡片，主图可完整查看，创作思路放在旁边，不会遮挡图片。"
-          />
-
-          <View style={[styles.portalSection, isMobile && styles.portalSectionMobile]}>
-            <View style={[styles.portalVisualColumn, isMobile && styles.fullWidth]}>
-              <View style={styles.portalImageCard}>
-                <Image source={portalCover} style={styles.portalImage} resizeMode="cover" />
-                <View style={styles.portalImageOverlay}>
-                  <Text style={styles.portalTag}>{coursePortal.subtitle}</Text>
-                  <Text style={styles.portalImageTitle}>{coursePortal.title}</Text>
-                  <Text style={styles.portalTools}>{coursePortal.tools}</Text>
-                </View>
-              </View>
-
-              <View style={[styles.mediaStrip, isMobile && styles.mediaStripMobile]}>
-                <View style={styles.videoSlot}>
-                  <Text style={styles.videoSlotLabel}>门户背景视频位</Text>
-                  <Text style={styles.videoSlotTitle}>保留给课程视频，不遮挡主图</Text>
-                  <Text style={styles.videoSlotText}>
-                    当前先展示结构和位置。后面我们可以把这块改成真正可播放的视频区域，或点击后弹出播放。
-                  </Text>
-                </View>
-
-                <View style={styles.quickLinksCard}>
-                  <Text style={styles.quickLinksTitle}>快速入口</Text>
-                  <ActionButton
-                    label="进入课程门户"
-                    onPress={() => Linking.openURL(coursePortal.link)}
-                    kind="dark"
-                  />
-                  <View style={styles.quickMeta}>
-                    <Text style={styles.quickMetaText}>视频素材路径已记录</Text>
-                    <Text style={styles.quickMetaPath}>{coursePortal.videoPath}</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            <View style={[styles.portalTextColumn, isMobile && styles.fullWidth]}>
-              <Panel>
-                <Text style={styles.panelEyebrow}>课程概述</Text>
-                <Text style={styles.panelTitle}>{coursePortal.title}</Text>
-                <Text style={styles.panelText}>{coursePortal.summary}</Text>
-              </Panel>
-
-              <Panel>
-                <Text style={styles.panelEyebrow}>创作思路</Text>
-                {coursePortal.process.map((item) => (
-                  <View key={item} style={styles.processRow}>
-                    <View style={styles.processDot} />
-                    <Text style={styles.processText}>{item}</Text>
-                  </View>
-                ))}
-              </Panel>
-            </View>
-          </View>
-
-          <View style={styles.portalFooterNote}>
-            <Text style={styles.portalFooterNoteText}>
-              这一块后面可以继续扩成课程列表，每个课程都统一为：封面图、视频位、创作思路、门户链接。
-            </Text>
-          </View>
-
-          <SectionIntro
-            eyebrow="Part 02"
-            title="智能体"
-            text="先把第二主板块留出来，和课程门户设计分开展示。后续可以根据你的智能体项目数量继续扩展。"
-          />
-
-          <View style={[styles.agentGrid, isMobile && styles.agentGridMobile]}>
-            {agentTracks.map((item, index) => (
-              <Panel key={item.title} style={[styles.agentCard, isMobile && styles.fullWidth]}>
-                <Text style={styles.agentIndex}>0{index + 1}</Text>
-                <Text style={styles.agentTitle}>{item.title}</Text>
-                <Text style={styles.agentText}>{item.note}</Text>
-              </Panel>
-            ))}
-          </View>
-
-          <View style={[styles.bottomBand, isMobile && styles.bottomBandMobile]}>
-            <View style={[styles.quoteCard, isMobile && styles.fullWidth]}>
-              <Text style={styles.quoteMark}>"</Text>
-              <Text style={styles.quoteText}>
-                这一版先解决结构和气质，再逐步把每门课程和每个智能体的真实内容填进去。
-              </Text>
-            </View>
-
-            <View style={[styles.nextCard, isMobile && styles.fullWidth]}>
-              <Text style={styles.panelEyebrow}>下一步建议</Text>
-              <Text style={styles.nextTitle}>继续补充第二门课程，或者开始填智能体项目。</Text>
-              <Text style={styles.nextText}>
-                你现在已经给了第一门课的图和视频，我们已经能看到网站的基本样子。后面每多给一门课，
-                这个网站就会更完整。
-              </Text>
-            </View>
-          </View>
+            {page === 'courses' && <CoursesPage isMobile={isMobile} onNavigate={setPage} />}
+            {page === 'agents' && <AgentsPage isMobile={isMobile} onNavigate={setPage} />}
+          </Animated.View>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function SectionIntro({
+function TopNav({
+  page,
+  onNavigate,
+  isMobile,
+}: {
+  page: PageKey;
+  onNavigate: (page: PageKey) => void;
+  isMobile: boolean;
+}) {
+  const items: { key: PageKey; label: string }[] = [
+    { key: 'home', label: '首页' },
+    { key: 'courses', label: '课程门户设计' },
+    { key: 'agents', label: '智能体' },
+  ];
+
+  return (
+    <View style={[styles.nav, isMobile && styles.navMobile]}>
+      <Pressable onPress={() => onNavigate('home')}>
+        <Text style={styles.brand}>AI 创作者手记</Text>
+      </Pressable>
+
+      <View style={[styles.navItems, isMobile && styles.navItemsMobile]}>
+        {items.map((item) => {
+          const active = page === item.key;
+          return (
+            <Pressable
+              key={item.key}
+              onPress={() => onNavigate(item.key)}
+              style={[styles.navPill, active && styles.navPillActive]}
+            >
+              <Text style={[styles.navPillText, active && styles.navPillTextActive]}>{item.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+function HomeHero({
+  isMobile,
+  onNavigate,
+}: {
+  isMobile: boolean;
+  onNavigate: (page: PageKey) => void;
+}) {
+  return (
+    <View style={[styles.hero, isMobile && styles.heroMobile]}>
+      <View style={styles.heroInner}>
+        <View style={styles.eyebrowPill}>
+          <View style={styles.eyebrowDot} />
+          <Text style={styles.eyebrowText}>AI 创作者手记</Text>
+        </View>
+
+        <Text style={[styles.heroTitle, isMobile && styles.heroTitleMobile]}>
+          用 AI 重新诠释{'\n'}
+          <Text style={styles.heroAccent}>创作的每一步</Text>
+        </Text>
+
+        <Text style={styles.heroDescription}>
+          这里收录了我在 AI 辅助创作领域的实践: 为课程设计视觉封面与视频，构建能够自主完成任务的智能体。
+          每件作品都附有完整的创作思路，并会逐步扩展为更系统的作品网站。
+        </Text>
+
+        <View style={[styles.heroActions, isMobile && styles.heroActionsMobile]}>
+          <ActionButton label="浏览课程门户" kind="dark" onPress={() => onNavigate('courses')} />
+          <ActionButton label="查看智能体案例" kind="light" onPress={() => onNavigate('agents')} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function Ticker({ text }: { text: string }) {
+  return (
+    <View style={styles.tickerWrap}>
+      <Text numberOfLines={1} style={styles.tickerText}>
+        {text}
+      </Text>
+    </View>
+  );
+}
+
+function DirectorySection({
+  isMobile,
+  onNavigate,
+}: {
+  isMobile: boolean;
+  onNavigate: (page: PageKey) => void;
+}) {
+  return (
+    <View style={styles.sectionBlock}>
+      <SectionLabel label="作品目录" />
+
+      <View style={[styles.cardGrid, isMobile && styles.cardGridMobile]}>
+        {sections.map((section) => (
+          <Pressable
+            key={section.key}
+            onPress={() => onNavigate(section.key)}
+            style={({ pressed }) => [
+              styles.directoryCard,
+              { borderColor: section.border },
+              pressed && styles.directoryCardPressed,
+              isMobile && styles.fullWidth,
+            ]}
+          >
+            <View style={[styles.cardTopBar, { backgroundColor: section.color }]} />
+
+            <View style={styles.directoryCardBody}>
+              <View style={styles.directoryHead}>
+                <View style={[styles.iconBox, { backgroundColor: section.bg, borderColor: section.border }]}>
+                  <Text style={[styles.iconGlyph, { color: section.color }]}>
+                    {section.key === 'courses' ? '◫' : '◌'}
+                  </Text>
+                </View>
+                <Text style={[styles.directorySubtitle, { color: section.color }]}>{section.subtitle}</Text>
+              </View>
+
+              <Text style={styles.directoryTitle}>{section.title}</Text>
+              <Text style={styles.directoryDescription}>{section.description}</Text>
+
+              <View style={styles.directoryFooter}>
+                <View style={[styles.tagPill, { backgroundColor: section.bg, borderColor: section.border }]}>
+                  <Text style={[styles.tagText, { color: section.color }]}>{section.tag}</Text>
+                </View>
+                <Text style={[styles.enterText, { color: section.color }]}>进入 →</Text>
+              </View>
+            </View>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function StatsStrip({ isMobile }: { isMobile: boolean }) {
+  const stats = [
+    { num: '6+', label: 'AI 工具实践', sub: '可灵 · Gemini · DeepSeek …' },
+    { num: '1', label: '课程封面已完成', sub: '持续更新中' },
+    { num: '∞', label: '创作思路记录', sub: '每件作品完整存档' },
+  ];
+
+  return (
+    <View style={styles.statsWrap}>
+      <View style={[styles.statsGrid, isMobile && styles.statsGridMobile]}>
+        {stats.map((stat) => (
+          <View key={stat.label} style={styles.statItem}>
+            <Text style={styles.statNum}>{stat.num}</Text>
+            <Text style={styles.statLabel}>{stat.label}</Text>
+            <Text style={styles.statSub}>{stat.sub}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function QuoteSection() {
+  return (
+    <View style={styles.quoteSection}>
+      <Text style={styles.quoteBackground}>CREATE</Text>
+      <View style={styles.quoteContent}>
+        <Text style={styles.quoteMark}>"</Text>
+        <Text style={styles.quoteText}>
+          工具是时代给予创作者的语言，{'\n'}而 AI 正在成为这个时代最强大的笔。
+        </Text>
+        <View style={styles.quoteLine} />
+      </View>
+    </View>
+  );
+}
+
+function CoursesPage({
+  isMobile,
+  onNavigate,
+}: {
+  isMobile: boolean;
+  onNavigate: (page: PageKey) => void;
+}) {
+  return (
+    <View style={styles.subPage}>
+      <PageHeader
+        eyebrow="COURSE PORTAL"
+        title="课程门户设计"
+        text="按课程拆分展示，每门课程都能放封面图、创作思路、门户链接，以及后续的视频播放入口。"
+        backLabel="返回首页"
+        onBack={() => onNavigate('home')}
+      />
+
+      <View style={[styles.courseLayout, isMobile && styles.courseLayoutMobile]}>
+        <View style={[styles.courseMain, isMobile && styles.fullWidth]}>
+          <View style={styles.courseImageWrap}>
+            <Image source={portalCover} style={styles.courseImage} resizeMode="cover" />
+            <View style={styles.courseOverlay}>
+              <Text style={styles.courseOverlayTag}>课程门户设计 / 已完成封面</Text>
+              <Text style={styles.courseOverlayTitle}>{coursePortal.title}</Text>
+              <Text style={styles.courseOverlayTools}>{coursePortal.tools}</Text>
+            </View>
+          </View>
+
+          <View style={[styles.courseActionRow, isMobile && styles.courseActionRowMobile]}>
+            <Panel style={styles.videoPanel}>
+              <Text style={styles.panelEyebrow}>背景视频位</Text>
+              <Text style={styles.videoPanelTitle}>后续可升级为真实视频弹层</Text>
+              <Text style={styles.panelText}>{coursePortal.videoNote}</Text>
+            </Panel>
+
+            <Panel style={styles.portalLinkPanel}>
+              <Text style={styles.panelEyebrow}>课程入口</Text>
+              <Text style={styles.portalLinkTitle}>在线查看课程门户</Text>
+              <ActionButton label="打开课程门户" kind="dark" onPress={() => Linking.openURL(coursePortal.link)} />
+            </Panel>
+          </View>
+        </View>
+
+        <View style={[styles.courseSidebar, isMobile && styles.fullWidth]}>
+          <Panel>
+            <Text style={styles.panelEyebrow}>课程概述</Text>
+            <Text style={styles.panelTitle}>{coursePortal.title}</Text>
+            <Text style={styles.panelText}>{coursePortal.summary}</Text>
+          </Panel>
+
+          <Panel>
+            <Text style={styles.panelEyebrow}>创作思路</Text>
+            {coursePortal.process.map((item) => (
+              <View key={item} style={styles.bulletRow}>
+                <View style={styles.bulletDot} />
+                <Text style={styles.bulletText}>{item}</Text>
+              </View>
+            ))}
+          </Panel>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function AgentsPage({
+  isMobile,
+  onNavigate,
+}: {
+  isMobile: boolean;
+  onNavigate: (page: PageKey) => void;
+}) {
+  const agentCards = [
+    {
+      title: '智能体项目展示',
+      text: '这里后续可以按具体项目分卡片，例如客服、内容生成、知识库问答等，每个项目都保留产品描述和构建流程。',
+    },
+    {
+      title: '工作流与平台',
+      text: '可以继续补充 Dify、Coze、LangChain 等平台的分工方式，以及每个智能体从需求到落地的链路图。',
+    },
+  ];
+
+  return (
+    <View style={styles.subPage}>
+      <PageHeader
+        eyebrow="AGENTS"
+        title="AI 智能体案例"
+        text="这个板块现在先做成真正可点击进入的二级页面，方便后续继续往里加真实案例。"
+        backLabel="返回首页"
+        onBack={() => onNavigate('home')}
+      />
+
+      <View style={[styles.cardGrid, isMobile && styles.cardGridMobile]}>
+        {agentCards.map((card, index) => (
+          <Panel key={card.title} style={[styles.agentPageCard, isMobile && styles.fullWidth]}>
+            <Text style={styles.agentPageIndex}>0{index + 1}</Text>
+            <Text style={styles.agentPageTitle}>{card.title}</Text>
+            <Text style={styles.agentPageText}>{card.text}</Text>
+          </Panel>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function PageHeader({
   eyebrow,
   title,
   text,
+  backLabel,
+  onBack,
 }: {
   eyebrow: string;
   title: string;
   text: string;
+  backLabel: string;
+  onBack: () => void;
 }) {
   return (
-    <View style={styles.sectionIntro}>
+    <View style={styles.pageHeader}>
+      <Pressable onPress={onBack} style={styles.backLink}>
+        <Text style={styles.backLinkText}>← {backLabel}</Text>
+      </Pressable>
       <Text style={styles.sectionEyebrow}>{eyebrow}</Text>
       <Text style={styles.sectionTitle}>{title}</Text>
       <Text style={styles.sectionText}>{text}</Text>
+    </View>
+  );
+}
+
+function DecorativeBlobs() {
+  return (
+    <>
+      <View style={styles.blobTopRight} />
+      <View style={styles.blobBottomLeft} />
+      <View style={styles.blobMiddleRight} />
+      <View style={[styles.dot, { top: '18%', left: '8%', backgroundColor: 'rgba(232,149,109,0.5)' }]} />
+      <View style={[styles.dot, { top: '28%', left: '14%', width: 6, height: 6, backgroundColor: 'rgba(125,200,160,0.6)' }]} />
+      <View style={[styles.dot, { top: '22%', right: '18%', width: 8, height: 8, backgroundColor: 'rgba(154,107,48,0.35)' }]} />
+      <View style={[styles.dot, { top: '55%', left: '6%', width: 7, height: 7, backgroundColor: 'rgba(61,90,76,0.3)' }]} />
+    </>
+  );
+}
+
+function SectionLabel({ label }: { label: string }) {
+  return (
+    <View style={styles.sectionLabelWrap}>
+      <View style={styles.sectionLine} />
+      <Text style={styles.sectionLabel}>{label}</Text>
+      <View style={styles.sectionLine} />
     </View>
   );
 }
@@ -240,82 +482,44 @@ function Panel({ children, style }: { children: React.ReactNode; style?: object 
 
 function ActionButton({
   label,
-  onPress,
   kind,
+  onPress,
 }: {
   label: string;
-  onPress: () => void;
   kind: 'dark' | 'light';
+  onPress: () => void;
 }) {
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
-        styles.button,
-        kind === 'dark' ? styles.buttonDark : styles.buttonLight,
-        pressed && styles.buttonPressed,
+        styles.actionButton,
+        kind === 'dark' ? styles.actionButtonDark : styles.actionButtonLight,
+        pressed && styles.actionButtonPressed,
       ]}
     >
-      <Text style={kind === 'dark' ? styles.buttonDarkText : styles.buttonLightText}>{label}</Text>
+      <Text style={kind === 'dark' ? styles.actionButtonDarkText : styles.actionButtonLightText}>{label}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: palette.bg,
-  },
-  scrollView: {
-    flex: 1,
-    backgroundColor: palette.bg,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
+  safeArea: { flex: 1, backgroundColor: palette.bg },
+  scroll: { flex: 1, backgroundColor: palette.bg },
+  scrollContent: { flexGrow: 1 },
   page: {
     flex: 1,
     backgroundColor: palette.bg,
-    paddingHorizontal: 28,
-    paddingTop: 28,
-    paddingBottom: 64,
     overflow: 'hidden',
-  },
-  washTop: {
-    position: 'absolute',
-    top: -80,
-    left: '15%',
-    width: 420,
-    height: 220,
-    borderRadius: 999,
-    backgroundColor: 'rgba(215, 179, 141, 0.18)',
-    transform: [{ rotate: '-8deg' }],
-  },
-  washLeft: {
-    position: 'absolute',
-    top: 460,
-    left: -80,
-    width: 230,
-    height: 540,
-    borderRadius: 999,
-    backgroundColor: 'rgba(157, 171, 146, 0.16)',
-    transform: [{ rotate: '12deg' }],
-  },
-  washRight: {
-    position: 'absolute',
-    top: 1020,
-    right: -90,
-    width: 240,
-    height: 420,
-    borderRadius: 999,
-    backgroundColor: 'rgba(154, 163, 168, 0.14)',
-    transform: [{ rotate: '-18deg' }],
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 56,
   },
   nav: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 40,
+    justifyContent: 'space-between',
+    marginBottom: 28,
     zIndex: 2,
   },
   navMobile: {
@@ -325,141 +529,373 @@ const styles = StyleSheet.create({
   },
   brand: {
     color: palette.ink,
+    fontSize: 24,
     fontFamily: 'Georgia',
-    fontSize: 22,
+    fontWeight: '700',
   },
-  navLinks: {
+  navItems: {
     flexDirection: 'row',
-    gap: 22,
-  },
-  navLinksMobile: {
+    gap: 12,
     flexWrap: 'wrap',
-    rowGap: 10,
   },
-  navLink: {
+  navItemsMobile: {
+    width: '100%',
+  },
+  navPill: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+  },
+  navPillActive: {
+    backgroundColor: palette.dark,
+  },
+  navPillText: {
     color: palette.muted,
     fontSize: 13,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    fontWeight: '600',
+  },
+  navPillTextActive: {
+    color: '#f3ecd7',
   },
   hero: {
-    flexDirection: 'row',
-    gap: 22,
-    marginBottom: 48,
-    zIndex: 2,
+    minHeight: 560,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 48,
+    zIndex: 1,
   },
   heroMobile: {
-    flexDirection: 'column',
+    minHeight: 480,
   },
-  heroCopy: {
-    flex: 1.2,
-    backgroundColor: palette.paperSoft,
-    borderRadius: 32,
-    borderWidth: 1,
-    borderColor: palette.line,
-    padding: 30,
+  heroInner: {
+    maxWidth: 820,
+    width: '100%',
+    alignItems: 'center',
   },
-  eyebrow: {
-    color: palette.muted,
+  eyebrowPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: palette.dark,
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    marginBottom: 28,
+  },
+  eyebrowDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 99,
+    backgroundColor: palette.accent,
+  },
+  eyebrowText: {
+    color: '#f3ecd7',
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1.2,
     fontSize: 11,
-    marginBottom: 14,
+    fontWeight: '700',
   },
   heroTitle: {
+    textAlign: 'center',
     color: palette.ink,
     fontFamily: 'Georgia',
-    fontSize: 56,
-    lineHeight: 68,
+    fontSize: 68,
+    lineHeight: 76,
+    fontWeight: '700',
     marginBottom: 18,
   },
   heroTitleMobile: {
-    fontSize: 38,
-    lineHeight: 47,
+    fontSize: 42,
+    lineHeight: 50,
   },
-  heroText: {
+  heroAccent: {
+    color: palette.accent,
+    fontStyle: 'italic',
+  },
+  heroDescription: {
+    maxWidth: 560,
+    textAlign: 'center',
     color: palette.muted,
     fontSize: 16,
-    lineHeight: 28,
+    lineHeight: 30,
+    marginBottom: 28,
   },
   heroActions: {
     flexDirection: 'row',
-    gap: 14,
-    marginTop: 26,
+    gap: 12,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
   },
   heroActionsMobile: {
     flexDirection: 'column',
+    width: '100%',
   },
-  heroPanel: {
-    flex: 0.8,
-    borderRadius: 32,
-    padding: 28,
-    backgroundColor: palette.charcoal,
-    justifyContent: 'center',
-  },
-  heroPanelLabel: {
-    color: '#d9cdbf',
-    textTransform: 'uppercase',
-    fontSize: 11,
-    letterSpacing: 1,
-    marginBottom: 10,
-  },
-  heroPanelTitle: {
-    color: '#fff8ef',
-    fontFamily: 'Georgia',
-    fontSize: 34,
-    lineHeight: 42,
-    marginBottom: 14,
-  },
-  heroPanelText: {
-    color: '#e5d9ca',
-    fontSize: 15,
-    lineHeight: 26,
-  },
-  button: {
-    borderRadius: 999,
-    paddingHorizontal: 18,
+  actionButton: {
+    paddingHorizontal: 28,
     paddingVertical: 13,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonDark: {
-    backgroundColor: palette.ink,
-    borderColor: palette.ink,
+  actionButtonDark: {
+    backgroundColor: palette.dark,
+    borderColor: palette.dark,
   },
-  buttonLight: {
+  actionButtonLight: {
     backgroundColor: 'transparent',
-    borderColor: palette.line,
+    borderColor: 'rgba(154,107,48,0.45)',
   },
-  buttonPressed: {
+  actionButtonPressed: {
     opacity: 0.86,
   },
-  buttonDarkText: {
-    color: '#fff8ef',
+  actionButtonDarkText: {
+    color: '#f3ecd7',
+    fontWeight: '700',
     fontSize: 14,
   },
-  buttonLightText: {
+  actionButtonLightText: {
+    color: '#5a3a10',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  tickerWrap: {
+    backgroundColor: palette.dark,
+    borderTopWidth: 2,
+    borderBottomWidth: 2,
+    borderColor: '#3d2a10',
+    paddingVertical: 10,
+    marginHorizontal: -24,
+    paddingHorizontal: 24,
+  },
+  tickerText: {
+    color: '#f3ecd7',
+    fontSize: 13,
+    letterSpacing: 0.5,
+  },
+  sectionBlock: {
+    backgroundColor: '#f3ecd7',
+    marginHorizontal: -24,
+    paddingHorizontal: 24,
+    paddingVertical: 56,
+  },
+  sectionLabelWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 36,
+  },
+  sectionLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(154,107,48,0.2)',
+  },
+  sectionLabel: {
+    color: '#b8964a',
+    fontSize: 11,
+    letterSpacing: 1.6,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  cardGrid: {
+    flexDirection: 'row',
+    gap: 24,
+    flexWrap: 'wrap',
+  },
+  cardGridMobile: {
+    flexDirection: 'column',
+  },
+  directoryCard: {
+    flexBasis: '48%',
+    backgroundColor: palette.paper,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    overflow: 'hidden',
+    minWidth: 320,
+  },
+  directoryCardPressed: {
+    transform: [{ translateY: -2 }],
+  },
+  cardTopBar: {
+    height: 6,
+  },
+  directoryCardBody: {
+    padding: 24,
+  },
+  directoryHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 18,
+  },
+  iconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconGlyph: {
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  directorySubtitle: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.8,
+    textTransform: 'uppercase',
+  },
+  directoryTitle: {
     color: palette.ink,
-    fontSize: 14,
+    fontSize: 28,
+    lineHeight: 34,
+    fontFamily: 'Georgia',
+    fontWeight: '700',
+    marginBottom: 12,
   },
-  sectionIntro: {
-    marginBottom: 22,
-    maxWidth: 860,
-    zIndex: 2,
+  directoryDescription: {
+    color: palette.muted,
+    fontSize: 14,
+    lineHeight: 26,
+    marginBottom: 18,
+  },
+  directoryFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  tagPill: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  tagText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  enterText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  statsWrap: {
+    backgroundColor: palette.paper,
+    marginHorizontal: -24,
+    paddingHorizontal: 24,
+    paddingVertical: 44,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(154,107,48,0.12)',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 24,
+  },
+  statsGridMobile: {
+    flexDirection: 'column',
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statNum: {
+    color: palette.accent,
+    fontSize: 44,
+    lineHeight: 52,
+    fontFamily: 'Georgia',
+    fontWeight: '700',
+  },
+  statLabel: {
+    color: palette.ink,
+    fontSize: 15,
+    fontWeight: '600',
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  statSub: {
+    color: '#b09070',
+    fontSize: 12,
+  },
+  quoteSection: {
+    backgroundColor: palette.bgDeep,
+    marginHorizontal: -24,
+    paddingHorizontal: 24,
+    paddingVertical: 72,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  quoteBackground: {
+    position: 'absolute',
+    color: 'rgba(154,107,48,0.05)',
+    fontSize: 110,
+    fontFamily: 'Georgia',
+    fontWeight: '700',
+    letterSpacing: -2,
+  },
+  quoteContent: {
+    maxWidth: 700,
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  quoteMark: {
+    color: 'rgba(154,107,48,0.2)',
+    fontFamily: 'Georgia',
+    fontSize: 72,
+    lineHeight: 72,
+    marginBottom: 14,
+  },
+  quoteText: {
+    textAlign: 'center',
+    color: '#4a2e0a',
+    fontFamily: 'Georgia',
+    fontSize: 28,
+    lineHeight: 44,
+    fontStyle: 'italic',
+  },
+  quoteLine: {
+    width: 60,
+    height: 2,
+    backgroundColor: palette.accent,
+    marginTop: 28,
+  },
+  subPage: {
+    paddingTop: 12,
+    paddingBottom: 28,
+  },
+  pageHeader: {
+    maxWidth: 840,
+    marginBottom: 28,
+  },
+  backLink: {
+    alignSelf: 'flex-start',
+    marginBottom: 18,
+  },
+  backLinkText: {
+    color: palette.accent,
+    fontSize: 14,
+    fontWeight: '700',
   },
   sectionEyebrow: {
     color: palette.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
     fontSize: 11,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    fontWeight: '700',
     marginBottom: 10,
   },
   sectionTitle: {
     color: palette.ink,
     fontFamily: 'Georgia',
-    fontSize: 42,
-    lineHeight: 52,
+    fontSize: 46,
+    lineHeight: 54,
+    fontWeight: '700',
     marginBottom: 12,
   },
   sectionText: {
@@ -467,137 +903,89 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 28,
   },
-  portalSection: {
+  courseLayout: {
     flexDirection: 'row',
-    gap: 20,
+    gap: 22,
     alignItems: 'flex-start',
-    marginBottom: 18,
-    zIndex: 2,
   },
-  portalSectionMobile: {
+  courseLayoutMobile: {
     flexDirection: 'column',
   },
-  portalVisualColumn: {
-    flex: 1.15,
+  courseMain: {
+    flex: 1.18,
     gap: 18,
   },
-  portalTextColumn: {
-    flex: 0.85,
+  courseSidebar: {
+    flex: 0.82,
     gap: 18,
   },
-  portalImageCard: {
+  courseImageWrap: {
+    borderRadius: 28,
     overflow: 'hidden',
-    borderRadius: 30,
     borderWidth: 1,
-    borderColor: palette.line,
+    borderColor: palette.accentBorder,
     backgroundColor: palette.paper,
   },
-  portalImage: {
+  courseImage: {
     width: '100%',
-    height: 520,
+    height: 560,
   },
-  portalImageOverlay: {
+  courseOverlay: {
     position: 'absolute',
-    left: 24,
-    right: 24,
-    bottom: 24,
-    backgroundColor: 'rgba(251, 246, 238, 0.76)',
-    borderRadius: 22,
+    left: 20,
+    right: 20,
+    bottom: 20,
+    backgroundColor: 'rgba(250, 246, 236, 0.82)',
+    borderRadius: 20,
     padding: 18,
   },
-  portalTag: {
+  courseOverlayTag: {
     color: palette.muted,
+    fontSize: 11,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    fontSize: 11,
     marginBottom: 8,
   },
-  portalImageTitle: {
+  courseOverlayTitle: {
     color: palette.ink,
     fontFamily: 'Georgia',
     fontSize: 28,
-    lineHeight: 35,
+    lineHeight: 34,
+    fontWeight: '700',
     marginBottom: 8,
   },
-  portalTools: {
+  courseOverlayTools: {
     color: palette.muted,
     fontSize: 14,
   },
-  mediaStrip: {
+  courseActionRow: {
     flexDirection: 'row',
     gap: 18,
   },
-  mediaStripMobile: {
+  courseActionRowMobile: {
     flexDirection: 'column',
-  },
-  videoSlot: {
-    flex: 1,
-    minHeight: 210,
-    borderRadius: 28,
-    padding: 22,
-    backgroundColor: '#e4dbd0',
-    borderWidth: 1,
-    borderColor: palette.line,
-    justifyContent: 'flex-end',
-  },
-  videoSlotLabel: {
-    color: palette.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    fontSize: 11,
-    marginBottom: 8,
-  },
-  videoSlotTitle: {
-    color: palette.ink,
-    fontFamily: 'Georgia',
-    fontSize: 28,
-    lineHeight: 35,
-    marginBottom: 10,
-  },
-  videoSlotText: {
-    color: palette.muted,
-    fontSize: 15,
-    lineHeight: 24,
-  },
-  quickLinksCard: {
-    flex: 0.8,
-    borderRadius: 28,
-    padding: 22,
-    backgroundColor: palette.paperSoft,
-    borderWidth: 1,
-    borderColor: palette.line,
-    justifyContent: 'space-between',
-    gap: 16,
-  },
-  quickLinksTitle: {
-    color: palette.ink,
-    fontFamily: 'Georgia',
-    fontSize: 24,
-  },
-  quickMeta: {
-    gap: 6,
-  },
-  quickMetaText: {
-    color: palette.muted,
-    fontSize: 13,
-  },
-  quickMetaPath: {
-    color: palette.ink,
-    fontSize: 12,
-    lineHeight: 20,
   },
   panel: {
     backgroundColor: palette.paperSoft,
-    borderRadius: 28,
-    padding: 24,
     borderWidth: 1,
-    borderColor: palette.line,
+    borderColor: palette.accentBorder,
+    borderRadius: 24,
+    padding: 22,
+  },
+  videoPanel: {
+    flex: 1,
+  },
+  portalLinkPanel: {
+    flex: 0.78,
+    justifyContent: 'space-between',
+    gap: 14,
   },
   panelEyebrow: {
     color: palette.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
     fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    fontWeight: '700',
     marginBottom: 10,
   },
   panelTitle: {
@@ -605,123 +993,108 @@ const styles = StyleSheet.create({
     fontFamily: 'Georgia',
     fontSize: 32,
     lineHeight: 40,
+    fontWeight: '700',
     marginBottom: 12,
   },
   panelText: {
     color: palette.muted,
-    fontSize: 16,
-    lineHeight: 27,
-  },
-  processRow: {
-    flexDirection: 'row',
-    gap: 12,
-    alignItems: 'flex-start',
-    marginBottom: 14,
-  },
-  processDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 99,
-    backgroundColor: palette.ink,
-    marginTop: 8,
-  },
-  processText: {
-    flex: 1,
-    color: palette.muted,
     fontSize: 15,
-    lineHeight: 25,
+    lineHeight: 26,
   },
-  portalFooterNote: {
-    marginBottom: 58,
-    borderTopWidth: 1,
-    borderTopColor: palette.line,
-    paddingTop: 16,
-    zIndex: 2,
-  },
-  portalFooterNoteText: {
-    color: palette.muted,
-    fontSize: 15,
-    lineHeight: 24,
-  },
-  agentGrid: {
-    flexDirection: 'row',
-    gap: 20,
-    marginBottom: 54,
-    zIndex: 2,
-  },
-  agentGridMobile: {
-    flexDirection: 'column',
-  },
-  agentCard: {
-    flex: 1,
-    minHeight: 220,
-  },
-  agentIndex: {
-    color: palette.muted,
-    fontSize: 36,
-    fontFamily: 'Georgia',
-    marginBottom: 18,
-  },
-  agentTitle: {
+  videoPanelTitle: {
     color: palette.ink,
     fontFamily: 'Georgia',
     fontSize: 28,
     lineHeight: 34,
-    marginBottom: 12,
+    fontWeight: '700',
+    marginBottom: 10,
   },
-  agentText: {
-    color: palette.muted,
-    fontSize: 15,
-    lineHeight: 25,
-  },
-  bottomBand: {
-    flexDirection: 'row',
-    gap: 20,
-    zIndex: 2,
-  },
-  bottomBandMobile: {
-    flexDirection: 'column',
-  },
-  quoteCard: {
-    flex: 0.95,
-    backgroundColor: '#eadfd1',
-    borderRadius: 28,
-    padding: 26,
-    justifyContent: 'center',
-  },
-  quoteMark: {
+  portalLinkTitle: {
     color: palette.ink,
     fontFamily: 'Georgia',
-    fontSize: 72,
-    lineHeight: 72,
-    marginBottom: 8,
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '700',
   },
-  quoteText: {
+  bulletRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 14,
+  },
+  bulletDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 99,
+    marginTop: 8,
+    backgroundColor: palette.ink,
+  },
+  bulletText: {
+    flex: 1,
+    color: palette.muted,
+    fontSize: 15,
+    lineHeight: 26,
+  },
+  agentPageCard: {
+    flexBasis: '48%',
+    minWidth: 320,
+    minHeight: 240,
+  },
+  agentPageIndex: {
+    color: palette.accent,
+    fontFamily: 'Georgia',
+    fontSize: 38,
+    lineHeight: 44,
+    marginBottom: 16,
+  },
+  agentPageTitle: {
     color: palette.ink,
     fontFamily: 'Georgia',
     fontSize: 28,
-    lineHeight: 40,
-  },
-  nextCard: {
-    flex: 1.05,
-    borderRadius: 28,
-    padding: 26,
-    backgroundColor: palette.charcoal,
-    justifyContent: 'center',
-  },
-  nextTitle: {
-    color: '#fff8ef',
-    fontFamily: 'Georgia',
-    fontSize: 34,
-    lineHeight: 42,
+    lineHeight: 34,
+    fontWeight: '700',
     marginBottom: 12,
   },
-  nextText: {
-    color: '#e5d9ca',
-    fontSize: 16,
-    lineHeight: 27,
+  agentPageText: {
+    color: palette.muted,
+    fontSize: 15,
+    lineHeight: 26,
   },
   fullWidth: {
     width: '100%',
+    minWidth: 0,
+  },
+  blobTopRight: {
+    position: 'absolute',
+    top: -60,
+    right: -80,
+    width: 420,
+    height: 420,
+    backgroundColor: 'rgba(125,200,160,0.22)',
+    borderRadius: 999,
+  },
+  blobBottomLeft: {
+    position: 'absolute',
+    bottom: 60,
+    left: -60,
+    width: 280,
+    height: 260,
+    backgroundColor: 'rgba(232,149,109,0.18)',
+    borderRadius: 999,
+  },
+  blobMiddleRight: {
+    position: 'absolute',
+    top: '35%',
+    right: '5%',
+    width: 120,
+    height: 120,
+    backgroundColor: 'rgba(46,62,80,0.07)',
+    borderRadius: 999,
+  },
+  dot: {
+    position: 'absolute',
+    width: 10,
+    height: 10,
+    borderRadius: 99,
   },
 });
