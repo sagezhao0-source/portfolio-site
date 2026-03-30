@@ -559,6 +559,7 @@ function CoursesPage({
 }) {
   const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
   const [courseTab, setCourseTab] = useState<'story' | 'video'>('story');
+  const [lightboxCourse, setLightboxCourse] = useState<CourseItem | null>(null);
 
   useEffect(() => {
     if (!selectedCourse) setCourseTab('story');
@@ -576,31 +577,17 @@ function CoursesPage({
 
       <View style={[styles.courseGrid, isMobile && styles.courseGridMobile]}>
         {courses.map((course) => (
-          <HoverCard
+          <CoursePreviewCard
             key={course.id}
-            onPress={() => setSelectedCourse(course)}
-            style={[styles.courseCard, isMobile && styles.fullWidth]}
-          >
-            <CourseCover course={course} compact />
-            <View style={styles.courseCardBody}>
-              <Text style={styles.courseCardTitle}>{course.title}</Text>
-              <Text style={styles.courseCardSubtitle}>{course.subtitle}</Text>
-              <Text style={styles.courseCardBrief}>{course.brief}</Text>
-
-              <View style={styles.courseCardTags}>
-                {course.tools.slice(0, 2).map((tool) => (
-                  <View key={tool} style={styles.courseToolPill}>
-                    <Text style={styles.courseToolPillText}>{tool}</Text>
-                  </View>
-                ))}
-                {course.hasVideo && (
-                  <View style={styles.courseVideoPill}>
-                    <Text style={styles.courseVideoPillText}>视频</Text>
-                  </View>
-                )}
-              </View>
-            </View>
-          </HoverCard>
+            course={course}
+            isMobile={isMobile}
+            onOpenStory={() => setSelectedCourse(course)}
+            onOpenPortal={() => {
+              if (course.portalUrl) {
+                Linking.openURL(course.portalUrl);
+              }
+            }}
+          />
         ))}
 
         <View style={[styles.courseCard, styles.coursePlaceholderCard, isMobile && styles.fullWidth]}>
@@ -625,8 +612,11 @@ function CoursesPage({
               style={[styles.courseModalCard, isMobile && styles.courseModalCardMobile]}
             >
               <View style={[styles.courseModalVisual, isMobile && styles.courseModalVisualMobile]}>
-                <Pressable style={styles.courseModalCoverWrap}>
+                <Pressable style={styles.courseModalCoverWrap} onPress={() => setLightboxCourse(selectedCourse)}>
                   <CourseCover course={selectedCourse} />
+                  <View style={styles.courseModalZoomHint}>
+                    <Text style={styles.courseModalZoomHintText}>点击查看大图</Text>
+                  </View>
                 </Pressable>
 
                 <View style={styles.courseModalBottom}>
@@ -653,17 +643,31 @@ function CoursesPage({
                   <Text style={styles.modalCloseText}>×</Text>
                 </Pressable>
 
-                <Text style={styles.modalTitle}>{selectedCourse.title}</Text>
-                <Text style={styles.modalSubtitle}>{selectedCourse.subtitle}</Text>
-                <Text style={styles.modalBrief}>{selectedCourse.brief}</Text>
+                <View style={styles.modalTopIntro}>
+                  <Text style={styles.modalTitle}>{selectedCourse.title}</Text>
+                  <Text style={styles.modalSubtitle}>{selectedCourse.subtitle}</Text>
+                  <Text style={styles.modalBrief}>{selectedCourse.brief}</Text>
 
-                <View style={styles.modalTagWrap}>
-                  {selectedCourse.tags.map((tag) => (
-                    <View key={tag} style={styles.modalTag}>
-                      <Text style={styles.modalTagText}>#{tag}</Text>
+                  {selectedCourse.portalUrl ? (
+                    <View style={styles.modalPrimaryActionRow}>
+                      <ActionButton
+                        label="进入课程门户"
+                        kind="dark"
+                        onPress={() => Linking.openURL(selectedCourse.portalUrl!)}
+                      />
                     </View>
-                  ))}
+                  ) : null}
+
+                  <View style={styles.modalTagWrap}>
+                    {selectedCourse.tags.map((tag) => (
+                      <View key={tag} style={styles.modalTag}>
+                        <Text style={styles.modalTagText}>#{tag}</Text>
+                      </View>
+                    ))}
+                  </View>
                 </View>
+
+                <View style={styles.modalDivider} />
 
                 <View style={styles.modalTabs}>
                   <Pressable
@@ -689,7 +693,9 @@ function CoursesPage({
                 <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent}>
                   {courseTab === 'story' ? (
                     <>
-                      <Text style={styles.modalIntro}>{selectedCourse.story.intro}</Text>
+                      <View style={styles.modalLeadBlock}>
+                        <Text style={styles.modalIntro}>{selectedCourse.story.intro}</Text>
+                      </View>
                       {selectedCourse.story.steps.map((step, index) => (
                         <View key={`${selectedCourse.id}-${step.step}`} style={styles.stepRow}>
                           <View style={styles.stepColumn}>
@@ -727,7 +733,85 @@ function CoursesPage({
           </Pressable>
         ) : null}
       </Modal>
+
+      <Modal
+        visible={!!lightboxCourse}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLightboxCourse(null)}
+      >
+        {lightboxCourse ? (
+          <Pressable style={styles.lightboxBackdrop} onPress={() => setLightboxCourse(null)}>
+            <Pressable onPress={(event) => event.stopPropagation()} style={styles.lightboxCard}>
+              <Pressable onPress={() => setLightboxCourse(null)} style={styles.lightboxClose}>
+                <Text style={styles.modalCloseText}>×</Text>
+              </Pressable>
+              <CourseCover course={lightboxCourse} />
+            </Pressable>
+          </Pressable>
+        ) : null}
+      </Modal>
     </View>
+  );
+}
+
+function CoursePreviewCard({
+  course,
+  isMobile,
+  onOpenStory,
+  onOpenPortal,
+}: {
+  course: CourseItem;
+  isMobile: boolean;
+  onOpenStory: () => void;
+  onOpenPortal: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <Pressable
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
+      style={({ pressed }) => [
+        styles.courseCard,
+        isMobile && styles.fullWidth,
+        hovered && styles.courseCardHover,
+        pressed && styles.directoryCardPressed,
+      ]}
+    >
+      <View style={styles.coursePreviewMedia}>
+        <CourseCover course={course} compact />
+
+        <View style={[styles.courseHoverOverlay, hovered && styles.courseHoverOverlayVisible]}>
+          <View style={styles.courseHoverButtons}>
+            <ActionButton label="查看创作思路" kind="light" onPress={onOpenStory} />
+            {course.portalUrl ? (
+              <ActionButton label="进入课程门户" kind="dark" onPress={onOpenPortal} />
+            ) : null}
+          </View>
+        </View>
+
+        {course.hasVideo ? (
+          <View style={styles.coursePlayBadge}>
+            <Text style={styles.coursePlayBadgeText}>▶</Text>
+          </View>
+        ) : null}
+      </View>
+
+      <View style={styles.courseCardBody}>
+        <Text style={styles.courseCardTitle}>{course.title}</Text>
+        <Text style={styles.courseCardSubtitle}>{course.subtitle}</Text>
+        <Text style={styles.courseCardBrief}>{course.brief}</Text>
+
+        <View style={styles.courseCardTags}>
+          {course.tools.slice(0, 2).map((tool) => (
+            <View key={tool} style={styles.courseToolPill}>
+              <Text style={styles.courseToolPillText}>{tool}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    </Pressable>
   );
 }
 
@@ -1427,6 +1511,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(90,114,72,0.14)',
   },
+  courseCardHover: {
+    transform: [{ translateY: -6 }],
+    shadowColor: '#6a562d',
+    shadowOpacity: 0.16,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 14 },
+    borderColor: 'rgba(184,130,74,0.24)',
+  },
   coursePlaceholderCard: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -1437,6 +1529,9 @@ const styles = StyleSheet.create({
   },
   courseCardBody: {
     padding: 16,
+  },
+  coursePreviewMedia: {
+    position: 'relative',
   },
   courseCardTitle: {
     color: '#1c2414',
@@ -1554,6 +1649,38 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     fontWeight: '700',
   },
+  courseHoverOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(30, 24, 18, 0.42)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0,
+  },
+  courseHoverOverlayVisible: {
+    opacity: 1,
+  },
+  courseHoverButtons: {
+    width: '78%',
+    gap: 12,
+  },
+  coursePlayBadge: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    width: 48,
+    height: 48,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 250, 242, 0.92)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(184,130,74,0.2)',
+  },
+  coursePlayBadgeText: {
+    color: '#b07a38',
+    fontSize: 18,
+    marginLeft: 2,
+  },
   abstractOrbLarge: {
     position: 'absolute',
     width: 180,
@@ -1603,6 +1730,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(90,114,72,0.18)',
+    shadowColor: '#2e2519',
+    shadowOpacity: 0.14,
+    shadowRadius: 26,
+    shadowOffset: { width: 0, height: 16 },
   },
   courseModalCardMobile: {
     flexDirection: 'column',
@@ -1610,7 +1741,7 @@ const styles = StyleSheet.create({
   courseModalVisual: {
     width: '40%',
     backgroundColor: '#141c0e',
-    padding: 14,
+    padding: 12,
     justifyContent: 'space-between',
   },
   courseModalVisualMobile: {
@@ -1620,6 +1751,23 @@ const styles = StyleSheet.create({
   courseModalCoverWrap: {
     borderRadius: 18,
     overflow: 'hidden',
+    position: 'relative',
+  },
+  courseModalZoomHint: {
+    position: 'absolute',
+    top: 14,
+    left: 14,
+    backgroundColor: 'rgba(8,12,6,0.52)',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderWidth: 1,
+    borderColor: 'rgba(250,248,242,0.18)',
+  },
+  courseModalZoomHintText: {
+    color: 'rgba(245,240,232,0.88)',
+    fontSize: 11,
+    letterSpacing: 0.6,
   },
   courseModalBottom: {
     gap: 14,
@@ -1645,8 +1793,11 @@ const styles = StyleSheet.create({
   },
   courseModalContent: {
     flex: 1,
-    padding: 22,
+    paddingTop: 24,
+    paddingBottom: 20,
+    paddingHorizontal: 24,
     position: 'relative',
+    backgroundColor: '#f7f1e5',
   },
   modalClose: {
     position: 'absolute',
@@ -1670,156 +1821,177 @@ const styles = StyleSheet.create({
   modalTitle: {
     color: '#1c2414',
     fontFamily: 'Georgia',
-    fontSize: 30,
-    lineHeight: 38,
+    fontSize: 34,
+    lineHeight: 42,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 6,
     paddingRight: 36,
   },
   modalSubtitle: {
-    color: '#8a9a78',
-    fontSize: 13,
-    marginBottom: 10,
+    color: '#b19467',
+    fontSize: 14,
+    marginBottom: 16,
   },
   modalBrief: {
     color: '#4a5a3a',
-    fontSize: 14,
-    lineHeight: 24,
-    marginBottom: 14,
+    fontSize: 15,
+    lineHeight: 28,
+    marginBottom: 18,
+  },
+  modalTopIntro: {
+    paddingRight: 18,
+  },
+  modalPrimaryActionRow: {
+    alignSelf: 'flex-start',
+    marginBottom: 18,
   },
   modalTagWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 14,
+    marginBottom: 10,
   },
   modalTag: {
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: 'rgba(90,114,72,0.07)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,250,242,0.82)',
     borderWidth: 1,
-    borderColor: 'rgba(90,114,72,0.14)',
+    borderColor: 'rgba(184,130,74,0.18)',
   },
   modalTagText: {
-    color: palette.accent,
-    fontSize: 11,
+    color: '#b07a38',
+    fontSize: 12,
+  },
+  modalDivider: {
+    height: 1,
+    backgroundColor: 'rgba(184,130,74,0.18)',
+    marginBottom: 16,
   },
   modalTabs: {
     flexDirection: 'row',
     alignSelf: 'flex-start',
-    gap: 4,
-    padding: 4,
-    borderRadius: 999,
-    backgroundColor: 'rgba(90,114,72,0.07)',
+    gap: 6,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(184,130,74,0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(90,114,72,0.12)',
-    marginBottom: 14,
+    borderColor: 'rgba(184,130,74,0.14)',
+    marginBottom: 18,
   },
   modalTab: {
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: 999,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 16,
   },
   modalTabActive: {
-    backgroundColor: '#faf8f2',
+    backgroundColor: '#fffaf2',
+    shadowColor: '#b18445',
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
   },
   modalTabText: {
-    color: '#8a9a78',
-    fontSize: 13,
+    color: '#b19467',
+    fontSize: 14,
   },
   modalTabTextActive: {
-    color: palette.accent,
+    color: '#9a6b30',
     fontWeight: '700',
   },
   modalScroll: {
     flex: 1,
   },
   modalScrollContent: {
+    paddingBottom: 28,
+  },
+  modalLeadBlock: {
     paddingBottom: 20,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(184,130,74,0.14)',
   },
   modalIntro: {
     color: '#4a5a3a',
-    fontSize: 14,
-    lineHeight: 26,
-    paddingBottom: 16,
-    marginBottom: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(90,114,72,0.1)',
+    fontSize: 15,
+    lineHeight: 30,
   },
   stepRow: {
     flexDirection: 'row',
-    gap: 14,
-    paddingBottom: 16,
-    marginBottom: 4,
+    gap: 16,
+    paddingVertical: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(184,130,74,0.12)',
   },
   stepColumn: {
     alignItems: 'center',
   },
   stepCircle: {
-    width: 28,
-    height: 28,
+    width: 36,
+    height: 36,
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(90,114,72,0.1)',
+    backgroundColor: 'rgba(184,130,74,0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(90,114,72,0.22)',
+    borderColor: 'rgba(184,130,74,0.28)',
   },
   stepCircleText: {
-    color: palette.accent,
-    fontSize: 12,
+    color: '#b07a38',
+    fontSize: 16,
+    fontFamily: 'Georgia',
     fontWeight: '700',
   },
   stepLine: {
     width: 1,
     flex: 1,
-    minHeight: 14,
-    backgroundColor: 'rgba(90,114,72,0.18)',
+    minHeight: 18,
+    backgroundColor: 'rgba(184,130,74,0.18)',
     marginTop: 6,
   },
   stepContent: {
     flex: 1,
+    paddingTop: 2,
   },
   stepTitle: {
     color: '#1c2414',
     fontFamily: 'Georgia',
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: 24,
+    lineHeight: 30,
     fontWeight: '700',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   stepText: {
     color: '#5a6a4a',
-    fontSize: 13,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 31,
   },
   stepCaption: {
-    marginTop: 10,
+    marginTop: 14,
     color: '#6b7a5a',
-    fontSize: 12,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 22,
     fontStyle: 'italic',
-    backgroundColor: 'rgba(90,114,72,0.05)',
+    backgroundColor: 'rgba(184,130,74,0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(90,114,72,0.12)',
-    padding: 12,
+    borderColor: 'rgba(184,130,74,0.12)',
+    padding: 14,
     borderRadius: 14,
   },
   reflectionBox: {
-    marginTop: 10,
-    backgroundColor: 'rgba(90,114,72,0.05)',
+    marginTop: 20,
+    backgroundColor: 'rgba(184,130,74,0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(90,114,72,0.15)',
+    borderColor: 'rgba(184,130,74,0.14)',
     borderLeftWidth: 3,
-    borderLeftColor: 'rgba(90,114,72,0.35)',
-    borderRadius: 16,
-    padding: 14,
+    borderLeftColor: 'rgba(184,130,74,0.38)',
+    borderRadius: 18,
+    padding: 18,
   },
   reflectionText: {
     color: '#4a5a3a',
-    fontSize: 13,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 28,
     fontStyle: 'italic',
   },
   videoPlaceholderBox: {
@@ -1860,6 +2032,36 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     textAlign: 'center',
     maxWidth: 380,
+  },
+  lightboxBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(8,12,6,0.88)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  lightboxCard: {
+    width: '92%',
+    maxWidth: 1200,
+    maxHeight: '92%',
+    borderRadius: 22,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#111',
+  },
+  lightboxClose: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    zIndex: 3,
+    width: 36,
+    height: 36,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(250,248,242,0.9)',
+    borderWidth: 1,
+    borderColor: 'rgba(184,130,74,0.2)',
   },
   courseImageWrap: {
     borderRadius: 28,
