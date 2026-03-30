@@ -767,11 +767,29 @@ function CoursePreviewCard({
   onOpenPortal: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
+  const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const keepOpen = () => {
+    if (hoverTimeout.current) {
+      clearTimeout(hoverTimeout.current);
+      hoverTimeout.current = null;
+    }
+    setHovered(true);
+  };
+
+  const closeSoon = () => {
+    if (hoverTimeout.current) {
+      clearTimeout(hoverTimeout.current);
+    }
+    hoverTimeout.current = setTimeout(() => {
+      setHovered(false);
+    }, 120);
+  };
 
   return (
     <Pressable
-      onHoverIn={() => setHovered(true)}
-      onHoverOut={() => setHovered(false)}
+      onHoverIn={keepOpen}
+      onHoverOut={closeSoon}
       style={({ pressed }) => [
         styles.courseCard,
         isMobile && styles.fullWidth,
@@ -782,11 +800,36 @@ function CoursePreviewCard({
       <View style={styles.coursePreviewMedia}>
         <CourseCover course={course} compact />
 
-        <View style={[styles.courseHoverOverlay, hovered && styles.courseHoverOverlayVisible]}>
+        <View
+          style={[styles.courseHoverOverlay, hovered && styles.courseHoverOverlayVisible]}
+          onTouchStart={keepOpen}
+        >
           <View style={styles.courseHoverButtons}>
-            <ActionButton label="查看创作思路" kind="light" onPress={onOpenStory} />
+            <Pressable
+              onPress={onOpenStory}
+              onHoverIn={keepOpen}
+              onHoverOut={closeSoon}
+              style={({ pressed }) => [
+                styles.overlayPrimaryButton,
+                pressed && styles.overlayButtonPressed,
+              ]}
+            >
+              <Text style={styles.overlayPrimaryButtonText}>查看创作思路</Text>
+              <Text style={styles.overlayArrow}>›</Text>
+            </Pressable>
             {course.portalUrl ? (
-              <ActionButton label="进入课程门户" kind="dark" onPress={onOpenPortal} />
+              <Pressable
+                onPress={onOpenPortal}
+                onHoverIn={keepOpen}
+                onHoverOut={closeSoon}
+                style={({ pressed }) => [
+                  styles.overlayPortalButton,
+                  pressed && styles.overlayButtonPressed,
+                ]}
+              >
+                <Text style={styles.overlayPortalIcon}>↗</Text>
+                <Text style={styles.overlayPortalButtonText}>进入课程门户</Text>
+              </Pressable>
             ) : null}
           </View>
         </View>
@@ -1651,7 +1694,7 @@ const styles = StyleSheet.create({
   },
   courseHoverOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(30, 24, 18, 0.42)',
+    backgroundColor: 'rgba(58, 50, 42, 0.42)',
     alignItems: 'center',
     justifyContent: 'center',
     opacity: 0,
@@ -1660,25 +1703,79 @@ const styles = StyleSheet.create({
     opacity: 1,
   },
   courseHoverButtons: {
-    width: '78%',
-    gap: 12,
+    width: '74%',
+    gap: 10,
+  },
+  overlayPrimaryButton: {
+    minHeight: 54,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 251, 244, 0.98)',
+    borderWidth: 1,
+    borderColor: 'rgba(229, 209, 174, 0.96)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#8f6a34',
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+  },
+  overlayPrimaryButtonText: {
+    color: '#b07a38',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  overlayArrow: {
+    color: '#c2904e',
+    fontSize: 20,
+    lineHeight: 20,
+  },
+  overlayPortalButton: {
+    minHeight: 54,
+    borderRadius: 999,
+    backgroundColor: '#b98335',
+    borderWidth: 1,
+    borderColor: 'rgba(204, 151, 69, 0.98)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#8b5c1d',
+    shadowOpacity: 0.16,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  overlayPortalIcon: {
+    color: '#fff9ef',
+    fontSize: 16,
+    lineHeight: 16,
+  },
+  overlayPortalButtonText: {
+    color: '#fff9ef',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  overlayButtonPressed: {
+    opacity: 0.88,
+    transform: [{ translateY: 1 }],
   },
   coursePlayBadge: {
     position: 'absolute',
     top: 14,
     right: 14,
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: 999,
-    backgroundColor: 'rgba(255, 250, 242, 0.92)',
+    backgroundColor: 'rgba(255, 250, 242, 0.96)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(184,130,74,0.2)',
+    borderColor: 'rgba(228, 212, 185, 0.9)',
   },
   coursePlayBadgeText: {
     color: '#b07a38',
-    fontSize: 18,
+    fontSize: 20,
     marginLeft: 2,
   },
   abstractOrbLarge: {
