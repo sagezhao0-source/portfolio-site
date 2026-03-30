@@ -614,12 +614,13 @@ function CoursesPage({
               <View style={[styles.courseModalVisual, isMobile && styles.courseModalVisualMobile]}>
                 <Pressable style={styles.courseModalCoverWrap} onPress={() => setLightboxCourse(selectedCourse)}>
                   <CourseCover course={selectedCourse} />
-                  <View style={styles.courseModalZoomHint}>
-                    <Text style={styles.courseModalZoomHintText}>点击查看大图</Text>
-                  </View>
                 </Pressable>
 
-                <View style={styles.courseModalBottom}>
+                <View style={styles.courseModalInfoPanel}>
+                  <Text style={styles.courseModalInfoTitle}>{selectedCourse.title}</Text>
+                  <Text style={styles.courseModalInfoSubtitle}>{selectedCourse.subtitle}</Text>
+                  <Text style={styles.courseModalInfoBrief}>{selectedCourse.brief}</Text>
+
                   <View style={styles.courseModalToolWrap}>
                     {selectedCourse.tools.map((tool) => (
                       <View key={tool} style={styles.courseModalToolPill}>
@@ -629,11 +630,13 @@ function CoursesPage({
                   </View>
 
                   {selectedCourse.portalUrl ? (
-                    <ActionButton
-                      label="进入课程门户"
-                      kind="dark"
-                      onPress={() => Linking.openURL(selectedCourse.portalUrl!)}
-                    />
+                    <View style={styles.courseModalInfoAction}>
+                      <ActionButton
+                        label="进入课程门户"
+                        kind="dark"
+                        onPress={() => Linking.openURL(selectedCourse.portalUrl!)}
+                      />
+                    </View>
                   ) : null}
                 </View>
               </View>
@@ -643,28 +646,12 @@ function CoursesPage({
                   <Text style={styles.modalCloseText}>×</Text>
                 </Pressable>
 
-                <View style={styles.modalTopIntro}>
-                  <Text style={styles.modalTitle}>{selectedCourse.title}</Text>
-                  <Text style={styles.modalSubtitle}>{selectedCourse.subtitle}</Text>
-                  <Text style={styles.modalBrief}>{selectedCourse.brief}</Text>
-
-                  {selectedCourse.portalUrl ? (
-                    <View style={styles.modalPrimaryActionRow}>
-                      <ActionButton
-                        label="进入课程门户"
-                        kind="dark"
-                        onPress={() => Linking.openURL(selectedCourse.portalUrl!)}
-                      />
+                <View style={styles.modalTagWrap}>
+                  {selectedCourse.tags.map((tag) => (
+                    <View key={tag} style={styles.modalTag}>
+                      <Text style={styles.modalTagText}>#{tag}</Text>
                     </View>
-                  ) : null}
-
-                  <View style={styles.modalTagWrap}>
-                    {selectedCourse.tags.map((tag) => (
-                      <View key={tag} style={styles.modalTag}>
-                        <Text style={styles.modalTagText}>#{tag}</Text>
-                      </View>
-                    ))}
-                  </View>
+                  ))}
                 </View>
 
                 <View style={styles.modalDivider} />
@@ -1839,35 +1826,44 @@ const styles = StyleSheet.create({
     width: '40%',
     backgroundColor: '#141c0e',
     padding: 12,
-    justifyContent: 'space-between',
   },
   courseModalVisualMobile: {
     width: '100%',
-    minHeight: 300,
+    minHeight: 420,
   },
   courseModalCoverWrap: {
     borderRadius: 18,
     overflow: 'hidden',
     position: 'relative',
   },
-  courseModalZoomHint: {
-    position: 'absolute',
-    top: 14,
-    left: 14,
-    backgroundColor: 'rgba(8,12,6,0.52)',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+  courseModalInfoPanel: {
+    marginTop: 12,
+    borderRadius: 18,
+    padding: 18,
+    backgroundColor: '#f5ecde',
     borderWidth: 1,
-    borderColor: 'rgba(250,248,242,0.18)',
+    borderColor: 'rgba(214, 192, 158, 0.42)',
   },
-  courseModalZoomHintText: {
-    color: 'rgba(245,240,232,0.88)',
-    fontSize: 11,
-    letterSpacing: 0.6,
+  courseModalInfoTitle: {
+    color: '#2b1d10',
+    fontFamily: 'Georgia',
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: '700',
+    marginBottom: 6,
   },
-  courseModalBottom: {
-    gap: 14,
+  courseModalInfoSubtitle: {
+    color: '#b19467',
+    fontSize: 13,
+    marginBottom: 12,
+  },
+  courseModalInfoBrief: {
+    color: '#6e583d',
+    fontSize: 14,
+    lineHeight: 25,
+    marginBottom: 14,
+  },
+  courseModalInfoAction: {
     marginTop: 14,
   },
   courseModalToolWrap: {
@@ -1879,12 +1875,12 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    backgroundColor: 'rgba(200,220,180,0.18)',
+    backgroundColor: 'rgba(255, 249, 239, 0.92)',
     borderWidth: 1,
-    borderColor: 'rgba(200,220,180,0.2)',
+    borderColor: 'rgba(214, 192, 158, 0.44)',
   },
   courseModalToolText: {
-    color: '#d8ecc8',
+    color: '#9a6b30',
     fontSize: 11,
     fontWeight: '600',
   },
@@ -1915,38 +1911,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 18,
   },
-  modalTitle: {
-    color: '#1c2414',
-    fontFamily: 'Georgia',
-    fontSize: 34,
-    lineHeight: 42,
-    fontWeight: '700',
-    marginBottom: 6,
-    paddingRight: 36,
-  },
-  modalSubtitle: {
-    color: '#b19467',
-    fontSize: 14,
-    marginBottom: 16,
-  },
-  modalBrief: {
-    color: '#4a5a3a',
-    fontSize: 15,
-    lineHeight: 28,
-    marginBottom: 18,
-  },
-  modalTopIntro: {
-    paddingRight: 18,
-  },
-  modalPrimaryActionRow: {
-    alignSelf: 'flex-start',
-    marginBottom: 18,
-  },
   modalTagWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 10,
+    marginBottom: 12,
+    paddingRight: 36,
   },
   modalTag: {
     paddingHorizontal: 14,
