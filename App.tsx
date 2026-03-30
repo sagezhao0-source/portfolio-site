@@ -437,10 +437,15 @@ function HomeHero({
           <Text style={styles.eyebrowText}>AI 创作者手记</Text>
         </View>
 
+        <View style={styles.heroTitleWrap}>
+          <View style={styles.heroLineOne} />
+          <View style={styles.heroLineTwo} />
+          <View style={styles.heroLineThree} />
         <Text style={[styles.heroTitle, isMobile && styles.heroTitleMobile]}>
           用 AI 重新诠释{'\n'}
           <Text style={styles.heroAccent}>创作的每一步</Text>
         </Text>
+        </View>
 
         <Text style={styles.heroDescription}>
           这里收录了我在 AI 辅助创作领域的实践: 为课程设计视觉封面与视频，构建能够自主完成任务的智能体。
@@ -634,6 +639,8 @@ function CoursesPage({
                       <ActionButton
                         label="进入课程门户"
                         kind="dark"
+                        customStyle={styles.coursePortalSoftButton}
+                        customTextStyle={styles.coursePortalSoftButtonText}
                         onPress={() => Linking.openURL(selectedCourse.portalUrl!)}
                       />
                     </View>
@@ -955,9 +962,9 @@ function PageHeader({
 function DecorativeBlobs() {
   return (
     <>
-      <View style={styles.blobTopRight} />
-      <View style={styles.blobBottomLeft} />
-      <View style={styles.blobMiddleRight} />
+      <AnimatedFloating style={styles.blobTopRight} duration={7600} yOffset={10} />
+      <AnimatedFloating style={styles.blobBottomLeft} duration={8900} yOffset={12} />
+      <AnimatedFloating style={styles.blobMiddleRight} duration={6800} yOffset={8} />
       <View style={[styles.dot, { top: '18%', left: '8%', backgroundColor: 'rgba(232,149,109,0.5)' }]} />
       <View style={[styles.dot, { top: '28%', left: '14%', width: 6, height: 6, backgroundColor: 'rgba(125,200,160,0.6)' }]} />
       <View style={[styles.dot, { top: '22%', right: '18%', width: 8, height: 8, backgroundColor: 'rgba(154,107,48,0.35)' }]} />
@@ -984,10 +991,14 @@ function ActionButton({
   label,
   kind,
   onPress,
+  customStyle,
+  customTextStyle,
 }: {
   label: string;
   kind: 'dark' | 'light';
   onPress: () => void;
+  customStyle?: object;
+  customTextStyle?: object;
 }) {
   const [hovered, setHovered] = useState(false);
 
@@ -1000,10 +1011,18 @@ function ActionButton({
         styles.actionButton,
         kind === 'dark' ? styles.actionButtonDark : styles.actionButtonLight,
         hovered && (kind === 'dark' ? styles.actionButtonDarkHover : styles.actionButtonLightHover),
+        customStyle,
         pressed && styles.actionButtonPressed,
       ]}
     >
-      <Text style={kind === 'dark' ? styles.actionButtonDarkText : styles.actionButtonLightText}>{label}</Text>
+      <Text
+        style={[
+          kind === 'dark' ? styles.actionButtonDarkText : styles.actionButtonLightText,
+          customTextStyle,
+        ]}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -1085,6 +1104,41 @@ function RevealOnScroll({
   );
 }
 
+function AnimatedFloating({
+  style,
+  duration,
+  yOffset,
+}: {
+  style: object;
+  duration: number;
+  yOffset: number;
+}) {
+  const translateY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(translateY, {
+          toValue: -yOffset,
+          duration,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [duration, translateY, yOffset]);
+
+  return <Animated.View style={[style, { transform: [{ translateY }] }]} />;
+}
+
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: palette.bg },
   scroll: { flex: 1, backgroundColor: palette.bg },
@@ -1156,6 +1210,11 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
   },
+  heroTitleWrap: {
+    position: 'relative',
+    alignItems: 'center',
+    marginBottom: 18,
+  },
   eyebrowPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1186,7 +1245,7 @@ const styles = StyleSheet.create({
     fontSize: 68,
     lineHeight: 76,
     fontWeight: '700',
-    marginBottom: 18,
+    marginBottom: 0,
   },
   heroTitleMobile: {
     fontSize: 42,
@@ -1195,6 +1254,32 @@ const styles = StyleSheet.create({
   heroAccent: {
     color: palette.accent,
     fontStyle: 'italic',
+  },
+  heroLineOne: {
+    position: 'absolute',
+    top: 6,
+    left: -42,
+    width: 120,
+    height: 2,
+    backgroundColor: 'rgba(154,107,48,0.22)',
+    transform: [{ rotate: '-12deg' }],
+  },
+  heroLineTwo: {
+    position: 'absolute',
+    bottom: 10,
+    right: -36,
+    width: 150,
+    height: 2,
+    backgroundColor: 'rgba(90,114,72,0.18)',
+    transform: [{ rotate: '10deg' }],
+  },
+  heroLineThree: {
+    position: 'absolute',
+    bottom: -8,
+    left: '28%',
+    width: 220,
+    height: 2,
+    backgroundColor: 'rgba(154,107,48,0.26)',
   },
   heroDescription: {
     maxWidth: 560,
@@ -1840,9 +1925,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderRadius: 18,
     padding: 18,
-    backgroundColor: '#f5ecde',
+    backgroundColor: '#f9f3e9',
     borderWidth: 1,
-    borderColor: 'rgba(214, 192, 158, 0.42)',
+    borderColor: 'rgba(223, 205, 178, 0.5)',
+    minHeight: 252,
+    justifyContent: 'space-between',
   },
   courseModalInfoTitle: {
     color: '#2b1d10',
@@ -1866,6 +1953,13 @@ const styles = StyleSheet.create({
   courseModalInfoAction: {
     marginTop: 14,
   },
+  coursePortalSoftButton: {
+    backgroundColor: '#c79347',
+    borderColor: '#d3a25b',
+  },
+  coursePortalSoftButtonText: {
+    color: '#fffaf1',
+  },
   courseModalToolWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1875,7 +1969,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    backgroundColor: 'rgba(255, 249, 239, 0.92)',
+    backgroundColor: 'rgba(255, 251, 245, 0.96)',
     borderWidth: 1,
     borderColor: 'rgba(214, 192, 158, 0.44)',
   },
