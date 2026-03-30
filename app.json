@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Smart Learner",
+    "slug": "smart-learner-local",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "sdkVersion": "54.0.0",
+    "plugins": [
+      "expo-notifications",
+      "expo-asset",
+      "expo-web-browser",
+      "@react-native-community/datetimepicker"
+    ]
+  }
+}
