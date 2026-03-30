@@ -472,14 +472,6 @@ function AnimatedNavButton({
   active: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
-  const accentStyle =
-    label === '首页'
-      ? styles.navPillYellow
-      : label === '课程门户设计'
-        ? styles.navPillBlue
-        : styles.navPillOrange;
-  const labelStyle =
-    label === '首页' ? styles.navPillTextDark : styles.navPillTextLight;
 
   return (
     <Pressable
@@ -488,13 +480,12 @@ function AnimatedNavButton({
       onHoverOut={() => setHovered(false)}
       style={({ pressed }) => [
         styles.navPill,
-        accentStyle,
         active && styles.navPillActive,
         hovered && styles.navPillHover,
         pressed && styles.navPillPressed,
       ]}
     >
-      <Text style={[styles.navPillText, labelStyle, active && styles.navPillTextActive]}>{label}</Text>
+      <Text style={[styles.navPillText, active && styles.navPillTextActive]}>{label}</Text>
     </Pressable>
   );
 }
@@ -727,14 +718,14 @@ function CoursesPage({
             >
               <View style={[styles.courseModalVisual, isMobile && styles.courseModalVisualMobile]}>
                 <Pressable style={styles.courseModalCoverWrap} onPress={() => setLightboxCourse(selectedCourse)}>
-                  <CourseCover course={selectedCourse} />
+                  <CourseCover course={selectedCourse} showOverlay={false} />
+                  <View style={styles.courseModalZoomHint}>
+                    <Text style={styles.courseModalZoomHintIcon}>⌕</Text>
+                    <Text style={styles.courseModalZoomHintText}>点击查看大图</Text>
+                  </View>
                 </Pressable>
 
-                <View style={styles.courseModalInfoPanel}>
-                  <Text style={styles.courseModalInfoTitle}>{selectedCourse.title}</Text>
-                  <Text style={styles.courseModalInfoSubtitle}>{selectedCourse.subtitle}</Text>
-                  <Text style={styles.courseModalInfoBrief}>{selectedCourse.brief}</Text>
-
+                <View style={styles.courseModalBottomOverlay}>
                   <View style={styles.courseModalToolWrap}>
                     {selectedCourse.tools.map((tool) => (
                       <View key={tool} style={styles.courseModalToolPill}>
@@ -744,15 +735,16 @@ function CoursesPage({
                   </View>
 
                   {selectedCourse.portalUrl ? (
-                    <View style={styles.courseModalInfoAction}>
-                      <ActionButton
-                        label="进入课程门户"
-                        kind="dark"
-                        customStyle={styles.coursePortalSoftButton}
-                        customTextStyle={styles.coursePortalSoftButtonText}
-                        onPress={() => Linking.openURL(selectedCourse.portalUrl!)}
-                      />
-                    </View>
+                    <Pressable
+                      onPress={() => Linking.openURL(selectedCourse.portalUrl!)}
+                      style={({ pressed }) => [
+                        styles.coursePortalOverlayButton,
+                        pressed && styles.overlayButtonPressed,
+                      ]}
+                    >
+                      <Text style={styles.coursePortalOverlayIcon}>↗</Text>
+                      <Text style={styles.coursePortalOverlayText}>进入课程门户</Text>
+                    </Pressable>
                   ) : null}
                 </View>
               </View>
@@ -761,6 +753,10 @@ function CoursesPage({
                 <Pressable onPress={() => setSelectedCourse(null)} style={styles.modalClose}>
                   <Text style={styles.modalCloseText}>×</Text>
                 </Pressable>
+
+                <Text style={styles.modalTitle}>{selectedCourse.title}</Text>
+                <Text style={styles.modalSubtitle}>{selectedCourse.subtitle}</Text>
+                <Text style={styles.modalBrief}>{selectedCourse.brief}</Text>
 
                 <View style={styles.modalTagWrap}>
                   {selectedCourse.tags.map((tag) => (
@@ -849,7 +845,7 @@ function CoursesPage({
               <Pressable onPress={() => setLightboxCourse(null)} style={styles.lightboxClose}>
                 <Text style={styles.modalCloseText}>×</Text>
               </Pressable>
-              <CourseCover course={lightboxCourse} />
+              <CourseCover course={lightboxCourse} showOverlay={false} />
             </Pressable>
           </Pressable>
         ) : null}
@@ -961,15 +957,25 @@ function CoursePreviewCard({
   );
 }
 
-function CourseCover({ course, compact = false }: { course: CourseItem; compact?: boolean }) {
+function CourseCover({
+  course,
+  compact = false,
+  showOverlay = true,
+}: {
+  course: CourseItem;
+  compact?: boolean;
+  showOverlay?: boolean;
+}) {
   if (course.coverType === 'image' && course.coverSource) {
     return (
       <View style={[styles.courseCoverWrap, compact && styles.courseCoverWrapCompact]}>
         <Image source={course.coverSource} style={styles.courseCoverImage} resizeMode="cover" />
-        <View style={styles.courseCoverOverlay}>
-          <Text style={styles.courseCoverOverlayTag}>{course.subtitle}</Text>
-          <Text style={styles.courseCoverOverlayTitle}>{course.title}</Text>
-        </View>
+        {showOverlay ? (
+          <View style={styles.courseCoverOverlay}>
+            <Text style={styles.courseCoverOverlayTag}>{course.subtitle}</Text>
+            <Text style={styles.courseCoverOverlayTitle}>{course.title}</Text>
+          </View>
+        ) : null}
       </View>
     );
   }
@@ -994,10 +1000,12 @@ function CourseCover({ course, compact = false }: { course: CourseItem; compact?
           { backgroundColor: `${course.coverPalette.accent}1A`, borderColor: `${course.coverPalette.accent}2B` },
         ]}
       />
-      <View style={styles.abstractCoverTextWrap}>
-        <Text style={[styles.abstractCoverTag, { color: course.coverPalette.accent }]}>{course.subtitle}</Text>
-        <Text style={[styles.abstractCoverTitle, { color: course.coverPalette.text }]}>{course.title}</Text>
-      </View>
+        {showOverlay ? (
+          <View style={styles.abstractCoverTextWrap}>
+            <Text style={[styles.abstractCoverTag, { color: course.coverPalette.accent }]}>{course.subtitle}</Text>
+            <Text style={[styles.abstractCoverTitle, { color: course.coverPalette.text }]}>{course.title}</Text>
+          </View>
+        ) : null}
     </View>
   );
 }
@@ -1287,57 +1295,34 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   navPill: {
-    minWidth: 96,
-    minHeight: 88,
-    borderRadius: 28,
-    borderWidth: 1.5,
+    minWidth: 108,
+    minHeight: 60,
+    borderRadius: 18,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderColor: 'transparent',
+    backgroundColor: 'transparent',
   },
   navPillActive: {
-    transform: [{ translateY: -3 }],
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
+    borderColor: 'rgba(196, 156, 92, 0.38)',
+    backgroundColor: 'rgba(223, 232, 191, 0.24)',
   },
   navPillText: {
+    color: '#7e6d53',
     fontSize: 14,
     fontWeight: '600',
   },
-  navPillTextDark: {
-    color: '#1c140e',
-  },
-  navPillTextLight: {
-    color: '#fff9f0',
-  },
   navPillTextActive: {
-    color: '#fff9f0',
-  },
-  navPillYellow: {
-    backgroundColor: '#ffc125',
-    borderColor: '#f3b412',
-    shadowColor: '#b47b0f',
-  },
-  navPillBlue: {
-    backgroundColor: '#2e45c7',
-    borderColor: '#2a40b9',
-    shadowColor: '#24348c',
-  },
-  navPillOrange: {
-    backgroundColor: '#ff5a0a',
-    borderColor: '#ef5206',
-    shadowColor: '#b5430b',
+    color: '#9a6b30',
   },
   navPillHover: {
-    transform: [{ translateY: -5 }, { scale: 1.02 }],
-    shadowOpacity: 0.2,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 9 },
+    backgroundColor: 'rgba(223, 232, 191, 0.16)',
   },
   navPillPressed: {
-    transform: [{ translateY: -1 }, { scale: 0.99 }],
+    opacity: 0.84,
   },
   hero: {
     minHeight: 560,
@@ -2136,73 +2121,89 @@ const styles = StyleSheet.create({
   courseModalVisual: {
     width: '40%',
     backgroundColor: '#141c0e',
-    padding: 12,
+    padding: 0,
+    position: 'relative',
+    overflow: 'hidden',
   },
   courseModalVisualMobile: {
     width: '100%',
-    minHeight: 420,
+    minHeight: 320,
   },
   courseModalCoverWrap: {
-    borderRadius: 18,
-    overflow: 'hidden',
+    flex: 1,
     position: 'relative',
   },
-  courseModalInfoPanel: {
-    marginTop: 12,
-    borderRadius: 18,
-    padding: 18,
-    backgroundColor: '#f9f3e9',
-    borderWidth: 1,
-    borderColor: 'rgba(223, 205, 178, 0.5)',
-    minHeight: 252,
-    justifyContent: 'space-between',
+  courseModalZoomHint: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(82, 81, 72, 0.84)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  courseModalInfoTitle: {
-    color: '#2b1d10',
-    fontFamily: 'Georgia',
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: '700',
-    marginBottom: 6,
+  courseModalZoomHintIcon: {
+    color: '#f2ece0',
+    fontSize: 12,
   },
-  courseModalInfoSubtitle: {
-    color: '#b19467',
-    fontSize: 13,
-    marginBottom: 12,
-  },
-  courseModalInfoBrief: {
-    color: '#6e583d',
-    fontSize: 14,
-    lineHeight: 25,
-    marginBottom: 14,
-  },
-  courseModalInfoAction: {
-    marginTop: 14,
-  },
-  coursePortalSoftButton: {
-    backgroundColor: '#c79347',
-    borderColor: '#d3a25b',
-  },
-  coursePortalSoftButtonText: {
-    color: '#fffaf1',
+  courseModalZoomHintText: {
+    color: '#f2ece0',
+    fontSize: 12,
+    fontWeight: '600',
   },
   courseModalToolWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginBottom: 12,
   },
   courseModalToolPill: {
     borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: 'rgba(255, 251, 245, 0.96)',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    backgroundColor: 'rgba(250, 248, 242, 0.18)',
     borderWidth: 1,
-    borderColor: 'rgba(214, 192, 158, 0.44)',
+    borderColor: 'rgba(232, 227, 214, 0.2)',
   },
   courseModalToolText: {
-    color: '#9a6b30',
-    fontSize: 11,
+    color: '#e9e5d8',
+    fontSize: 12,
     fontWeight: '600',
+  },
+  courseModalBottomOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 16,
+    paddingTop: 52,
+    paddingBottom: 16,
+    backgroundColor: 'rgba(10, 12, 8, 0.02)',
+  },
+  coursePortalOverlayButton: {
+    alignSelf: 'flex-start',
+    minHeight: 54,
+    borderRadius: 999,
+    paddingHorizontal: 24,
+    backgroundColor: '#b07a38',
+    borderWidth: 1,
+    borderColor: 'rgba(204, 164, 103, 0.54)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  coursePortalOverlayIcon: {
+    color: '#fff7ea',
+    fontSize: 16,
+    lineHeight: 16,
+  },
+  coursePortalOverlayText: {
+    color: '#fff7ea',
+    fontSize: 16,
+    fontWeight: '700',
   },
   courseModalContent: {
     flex: 1,
@@ -2211,6 +2212,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     position: 'relative',
     backgroundColor: '#f7f1e5',
+  },
+  modalTitle: {
+    color: '#1c2414',
+    fontFamily: 'Georgia',
+    fontSize: 34,
+    lineHeight: 42,
+    fontWeight: '700',
+    marginBottom: 6,
+    paddingRight: 36,
+  },
+  modalSubtitle: {
+    color: '#8fa07b',
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  modalBrief: {
+    color: '#4a5a3a',
+    fontSize: 15,
+    lineHeight: 28,
+    marginBottom: 18,
   },
   modalClose: {
     position: 'absolute',
