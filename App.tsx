@@ -60,6 +60,14 @@ type SectionCard = {
   border: string;
 };
 
+type RevealProps = {
+  scrollY: number;
+  viewportHeight: number;
+  children: React.ReactNode;
+  offset?: number;
+  style?: object;
+};
+
 const palette = {
   bg: '#f7f0dc',
   bgDeep: '#ede3c5',
@@ -309,6 +317,7 @@ export default function App() {
   const { width } = useWindowDimensions();
   const isMobile = width < 920;
   const [page, setPage] = useState<PageKey>('home');
+  const [scrollY, setScrollY] = useState(0);
   const fade = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -328,7 +337,12 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        scrollEventThrottle={16}
+        onScroll={(event) => setScrollY(event.nativeEvent.contentOffset.y)}
+      >
         <View style={styles.page}>
           <DecorativeBlobs />
           <TopNav page={page} onNavigate={setPage} isMobile={isMobile} />
@@ -337,15 +351,31 @@ export default function App() {
             {page === 'home' && (
               <>
                 <HomeHero isMobile={isMobile} onNavigate={setPage} />
-                <Ticker text={repeatedTicker} />
-                <DirectorySection isMobile={isMobile} onNavigate={setPage} />
-                <StatsStrip isMobile={isMobile} />
-                <QuoteSection />
+                <RevealOnScroll scrollY={scrollY} viewportHeight={width * 0.7}>
+                  <Ticker text={repeatedTicker} />
+                </RevealOnScroll>
+                <RevealOnScroll scrollY={scrollY} viewportHeight={width * 0.7} offset={80}>
+                  <DirectorySection isMobile={isMobile} onNavigate={setPage} />
+                </RevealOnScroll>
+                <RevealOnScroll scrollY={scrollY} viewportHeight={width * 0.7} offset={120}>
+                  <StatsStrip isMobile={isMobile} />
+                </RevealOnScroll>
+                <RevealOnScroll scrollY={scrollY} viewportHeight={width * 0.7} offset={140}>
+                  <QuoteSection />
+                </RevealOnScroll>
               </>
             )}
 
-            {page === 'courses' && <CoursesPage isMobile={isMobile} onNavigate={setPage} />}
-            {page === 'agents' && <AgentsPage isMobile={isMobile} onNavigate={setPage} />}
+            {page === 'courses' && (
+              <RevealOnScroll scrollY={scrollY} viewportHeight={width * 0.7}>
+                <CoursesPage isMobile={isMobile} onNavigate={setPage} />
+              </RevealOnScroll>
+            )}
+            {page === 'agents' && (
+              <RevealOnScroll scrollY={scrollY} viewportHeight={width * 0.7}>
+                <AgentsPage isMobile={isMobile} onNavigate={setPage} />
+              </RevealOnScroll>
+            )}
           </Animated.View>
         </View>
       </ScrollView>
@@ -449,15 +479,10 @@ function DirectorySection({
 
       <View style={[styles.cardGrid, isMobile && styles.cardGridMobile]}>
         {sections.map((section) => (
-          <Pressable
+          <HoverCard
             key={section.key}
             onPress={() => onNavigate(section.key)}
-            style={({ pressed }) => [
-              styles.directoryCard,
-              { borderColor: section.border },
-              pressed && styles.directoryCardPressed,
-              isMobile && styles.fullWidth,
-            ]}
+            style={[styles.directoryCard, { borderColor: section.border }, isMobile && styles.fullWidth]}
           >
             <View style={[styles.cardTopBar, { backgroundColor: section.color }]} />
 
@@ -481,7 +506,7 @@ function DirectorySection({
                 <Text style={[styles.enterText, { color: section.color }]}>进入 →</Text>
               </View>
             </View>
-          </Pressable>
+          </HoverCard>
         ))}
       </View>
     </View>
@@ -551,14 +576,10 @@ function CoursesPage({
 
       <View style={[styles.courseGrid, isMobile && styles.courseGridMobile]}>
         {courses.map((course) => (
-          <Pressable
+          <HoverCard
             key={course.id}
             onPress={() => setSelectedCourse(course)}
-            style={({ pressed }) => [
-              styles.courseCard,
-              pressed && styles.directoryCardPressed,
-              isMobile && styles.fullWidth,
-            ]}
+            style={[styles.courseCard, isMobile && styles.fullWidth]}
           >
             <CourseCover course={course} compact />
             <View style={styles.courseCardBody}>
@@ -579,7 +600,7 @@ function CoursesPage({
                 )}
               </View>
             </View>
-          </Pressable>
+          </HoverCard>
         ))}
 
         <View style={[styles.courseCard, styles.coursePlaceholderCard, isMobile && styles.fullWidth]}>
@@ -854,17 +875,99 @@ function ActionButton({
   kind: 'dark' | 'light';
   onPress: () => void;
 }) {
+  const [hovered, setHovered] = useState(false);
+
   return (
     <Pressable
       onPress={onPress}
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
       style={({ pressed }) => [
         styles.actionButton,
         kind === 'dark' ? styles.actionButtonDark : styles.actionButtonLight,
+        hovered && (kind === 'dark' ? styles.actionButtonDarkHover : styles.actionButtonLightHover),
         pressed && styles.actionButtonPressed,
       ]}
     >
       <Text style={kind === 'dark' ? styles.actionButtonDarkText : styles.actionButtonLightText}>{label}</Text>
     </Pressable>
+  );
+}
+
+function HoverCard({
+  onPress,
+  children,
+  style,
+}: {
+  onPress: () => void;
+  children: React.ReactNode;
+  style?: object | object[];
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
+      style={({ pressed }) => [
+        style,
+        hovered && styles.hoverCard,
+        pressed && styles.directoryCardPressed,
+      ]}
+    >
+      {children}
+    </Pressable>
+  );
+}
+
+function RevealOnScroll({
+  scrollY,
+  viewportHeight,
+  children,
+  offset = 0,
+  style,
+}: RevealProps) {
+  const [visible, setVisible] = useState(false);
+  const yRef = useRef(0);
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(30)).current;
+
+  useEffect(() => {
+    if (!visible && scrollY + viewportHeight > yRef.current + offset) {
+      setVisible(true);
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 500,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: 500,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [offset, opacity, scrollY, translateY, viewportHeight, visible]);
+
+  return (
+    <Animated.View
+      onLayout={(event) => {
+        yRef.current = event.nativeEvent.layout.y;
+      }}
+      style={[
+        style,
+        {
+          opacity,
+          transform: [{ translateY }],
+        },
+      ]}
+    >
+      {children}
+    </Animated.View>
   );
 }
 
@@ -1008,10 +1111,26 @@ const styles = StyleSheet.create({
   actionButtonDark: {
     backgroundColor: palette.dark,
     borderColor: palette.dark,
+    shadowColor: '#241808',
   },
   actionButtonLight: {
     backgroundColor: 'transparent',
     borderColor: 'rgba(154,107,48,0.45)',
+  },
+  actionButtonDarkHover: {
+    transform: [{ translateY: -2 }],
+    shadowOpacity: 0.22,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
+  },
+  actionButtonLightHover: {
+    transform: [{ translateY: -2 }],
+    backgroundColor: palette.accentLight,
+    borderColor: 'rgba(154,107,48,0.7)',
+    shadowColor: '#9a6b30',
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
   },
   actionButtonPressed: {
     opacity: 0.86,
@@ -1082,6 +1201,13 @@ const styles = StyleSheet.create({
   },
   directoryCardPressed: {
     transform: [{ translateY: -2 }],
+  },
+  hoverCard: {
+    transform: [{ translateY: -6 }],
+    shadowColor: 'rgba(80,60,20,0.45)',
+    shadowOpacity: 0.16,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 12 },
   },
   cardTopBar: {
     height: 6,
