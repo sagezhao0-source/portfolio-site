@@ -665,10 +665,25 @@ function CoursesPage({
   const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
   const [courseTab, setCourseTab] = useState<'story' | 'video'>('story');
   const [lightboxCourse, setLightboxCourse] = useState<CourseItem | null>(null);
+  const [detailHovered, setDetailHovered] = useState(false);
+  const detailImageScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (!selectedCourse) setCourseTab('story');
+    if (!selectedCourse) {
+      setCourseTab('story');
+      setDetailHovered(false);
+      detailImageScale.setValue(1);
+    }
   }, [selectedCourse]);
+
+  const animateDetailImage = (toValue: number) => {
+    Animated.timing(detailImageScale, {
+      toValue,
+      duration: 300,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  };
 
   return (
     <View style={styles.subPage}>
@@ -717,9 +732,28 @@ function CoursesPage({
               style={[styles.courseModalCard, isMobile && styles.courseModalCardMobile]}
             >
               <View style={[styles.courseModalVisual, isMobile && styles.courseModalVisualMobile]}>
-                <Pressable style={styles.courseModalCoverWrap} onPress={() => setLightboxCourse(selectedCourse)}>
-                  <CourseCover course={selectedCourse} showOverlay={false} />
-                  <View style={styles.courseModalZoomHint}>
+                <Pressable
+                  style={[styles.courseModalCoverWrap, { cursor: 'zoom-in' }] as any}
+                  onPress={() => setLightboxCourse(selectedCourse)}
+                  onHoverIn={() => {
+                    setDetailHovered(true);
+                    animateDetailImage(1.05);
+                  }}
+                  onHoverOut={() => {
+                    setDetailHovered(false);
+                    animateDetailImage(1);
+                  }}
+                >
+                  <Animated.View style={[styles.courseModalViewportImage, { transform: [{ scale: detailImageScale }] }]}>
+                    <CourseCover course={selectedCourse} showOverlay={false} />
+                  </Animated.View>
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      styles.courseModalZoomHint,
+                      (detailHovered || isMobile) && styles.courseModalZoomHintVisible,
+                    ]}
+                  >
                     <Text style={styles.courseModalZoomHintIcon}>⌕</Text>
                     <Text style={styles.courseModalZoomHintText}>点击查看大图</Text>
                   </View>
@@ -845,7 +879,11 @@ function CoursesPage({
               <Pressable onPress={() => setLightboxCourse(null)} style={styles.lightboxClose}>
                 <Text style={styles.modalCloseText}>×</Text>
               </Pressable>
-              <CourseCover course={lightboxCourse} showOverlay={false} />
+              {lightboxCourse.coverType === 'image' && lightboxCourse.coverSource ? (
+                <Image source={lightboxCourse.coverSource} style={styles.lightboxImage} resizeMode="contain" />
+              ) : (
+                <CourseCover course={lightboxCourse} showOverlay={false} imageResizeMode="contain" />
+              )}
             </Pressable>
           </Pressable>
         ) : null}
@@ -961,15 +999,17 @@ function CourseCover({
   course,
   compact = false,
   showOverlay = true,
+  imageResizeMode = 'cover',
 }: {
   course: CourseItem;
   compact?: boolean;
   showOverlay?: boolean;
+  imageResizeMode?: 'cover' | 'contain';
 }) {
   if (course.coverType === 'image' && course.coverSource) {
     return (
       <View style={[styles.courseCoverWrap, compact && styles.courseCoverWrapCompact]}>
-        <Image source={course.coverSource} style={styles.courseCoverImage} resizeMode="cover" />
+        <Image source={course.coverSource} style={styles.courseCoverImage} resizeMode={imageResizeMode} />
         {showOverlay ? (
           <View style={styles.courseCoverOverlay}>
             <Text style={styles.courseCoverOverlayTag}>{course.subtitle}</Text>
@@ -2132,6 +2172,10 @@ const styles = StyleSheet.create({
   courseModalCoverWrap: {
     flex: 1,
     position: 'relative',
+    overflow: 'hidden',
+  },
+  courseModalViewportImage: {
+    flex: 1,
   },
   courseModalZoomHint: {
     position: 'absolute',
@@ -2144,6 +2188,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    opacity: 0,
+    transform: [{ translateY: -6 }],
+  },
+  courseModalZoomHintVisible: {
+    opacity: 1,
+    transform: [{ translateY: 0 }],
   },
   courseModalZoomHintIcon: {
     color: '#f2ece0',
@@ -2449,14 +2499,18 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   lightboxCard: {
-    width: '92%',
-    maxWidth: 1200,
-    maxHeight: '92%',
-    borderRadius: 22,
+      width: '92%',
+      maxWidth: 1200,
+      maxHeight: '92%',
+      borderRadius: 22,
     overflow: 'hidden',
-    position: 'relative',
-    backgroundColor: '#111',
-  },
+      position: 'relative',
+      backgroundColor: '#111',
+    },
+  lightboxImage: {
+      width: '100%',
+      height: '100%',
+    },
   lightboxClose: {
     position: 'absolute',
     top: 14,
